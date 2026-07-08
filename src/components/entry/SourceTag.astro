@@ -46,18 +46,41 @@ function etymologySentence() {
 ---
 
 {source.code && (
-	<p style="font-size: 0.9em; color: var(--color-muted);" data-pagefind-weight="0.5">
-		{source.isDerivation ? (
-			<>
-				{t('entry.derivedFrom')}{' '}
-				{source.derivationSlug ? (
-					<a href={localizePath(`/entry/${source.derivationSlug}`, lang)}>{derivationBase}</a>
-				) : (
-					<span>{derivationBase}</span>
-				)}
-			</>
-		) : (
-			<>{etymologySentence()}</>
-		)}
-	</p>
+	<section class="origin" data-pagefind-weight="0.5">
+		<span class="origin-label">{t('entry.origin')}</span>
+		<p class="origin-text">
+			{source.isDerivation ? (
+				<>
+					{t('entry.derivedFrom')}{' '}
+					{source.derivationSlug ? (
+						<a href={localizePath(`/entry/${source.derivationSlug}`, lang)}>{derivationBase}</a>
+					) : (
+						<span>{derivationBase}</span>
+					)}
+				</>
+			) : (
+				<>{etymologySentence()}</>
+			)}
+		</p>
+	</section>
 )}
+
+<style>
+	.origin {
+		margin-block-start: var(--space-3);
+	}
+	.origin-label {
+		display: block;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-muted);
+		margin-block-end: 0.15rem;
+	}
+	.origin-text {
+		margin: 0;
+		font-size: 0.95rem;
+		color: var(--color-muted);
+	}
+</style>
+

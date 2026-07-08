@@ -55,8 +55,10 @@ function resolveFlexion1(gram, code) {
 	if (!code) return null;
 	const tokens = code.split('/').map((tok) => tok.trim()).filter(Boolean);
 	if (tokens.length === 0) return null;
-	const perRegister = (key) => tokens.map((tok) => gram.get(tok)?.[key] || tok).join('/');
-	return { code, en: perRegister('en'), de: perRegister('de'), deLay: perRegister('deLay'), roman: perRegister('roman') };
+	// The Roman gender words themselves contain "/" (e.g. "muršálo/i"), so join those with " · " to
+	// keep the compound legible; the short de/en labels read fine joined with "/".
+	const perRegister = (key, sep = '/') => tokens.map((tok) => gram.get(tok)?.[key] || tok).join(sep);
+	return { code, en: perRegister('en'), de: perRegister('de'), deLay: perRegister('deLay'), roman: perRegister('roman', ' · ') };
 }
 
 async function main() {
