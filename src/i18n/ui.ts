@@ -160,5 +160,8 @@ export function glossFor(gloss: { de: string | null; en: string | null }, lang: 
 // Picks a {en, de} label (grammatical / language labels resolved by the pipeline) for the locale.
 export function labelFor(label: { en: string | null; de: string | null } | null, lang: Locale): string | null {
 	if (!label) return null;
-	return (lang === 'de' ? label.de : label.en) ?? label.en ?? label.de;
+	const chosen = (lang === 'de' ? label.de : label.en) ?? label.en ?? label.de;
+	// Some abbreviation labels give two synonyms with "=" (e.g. "Nomen = Substantiv"). For a clean
+	// inline display we keep only the primary term; the full form stays in the abbreviations page.
+	return chosen ? chosen.split(' = ')[0].trim() : chosen;
 }
