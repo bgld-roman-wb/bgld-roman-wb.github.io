@@ -1,0 +1,10 @@
+---
+import AlphabeticalPage from '../../../../components/pages/AlphabeticalPage.astro';
+import { letterStaticPaths } from '../../../../lib/collection';
+
+export const getStaticPaths = letterStaticPaths;
+
+const { letter } = Astro.props;
+---
+
+<AlphabeticalPage letter={letter} lang="en" />

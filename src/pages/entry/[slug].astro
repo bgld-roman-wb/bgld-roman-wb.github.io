@@ -1,32 +1,10 @@
 ---
-import { getCollection } from 'astro:content';
-import EntryLayout from '../../layouts/EntryLayout.astro';
-import LemmaLine from '../../components/entry/LemmaLine.astro';
-import GrammarLine from '../../components/entry/GrammarLine.astro';
-import GlossList from '../../components/entry/GlossList.astro';
-import SourceTag from '../../components/entry/SourceTag.astro';
-import ParadigmToggle from '../../components/entry/ParadigmToggle.astro';
-import WordFamilyToggle from '../../components/entry/WordFamilyToggle.astro';
+import EntryPage from '../../components/pages/EntryPage.astro';
+import { entryStaticPaths } from '../../lib/collection';
 
-export async function getStaticPaths() {
-	const entries = await getCollection('entries');
-	return entries.map((entry) => ({
-		params: { slug: entry.data.slug },
-		props: { entry },
-	}));
-}
+export const getStaticPaths = entryStaticPaths;
 
 const { entry } = Astro.props;
-const { data } = entry;
 ---
 
-<EntryLayout title={data.lemma.int} description={data.glosses.map((g) => g.de ?? g.en).filter(Boolean).join(', ')}>
-	<article>
-		<LemmaLine lemma={data.lemma} composition={data.composition} variation={data.variation} reconstruction={data.reconstruction} />
-		<GrammarLine class1={data.wordClass.class1} class2={data.wordClass.class2} flexion1={data.flexion.flexion1} flexion2={data.flexion.flexion2} flexion3={data.flexion.flexion3} />
-		<GlossList glosses={data.glosses} />
-		<SourceTag source={data.source} />
-		<ParadigmToggle paradigm={data.paradigm} />
-		<WordFamilyToggle wordFamily={data.wordFamily} base={data.base} currentSlug={data.slug} />
-	</article>
-</EntryLayout>
+<EntryPage entry={entry} lang="de" />

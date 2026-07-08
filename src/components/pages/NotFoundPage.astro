@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<BaseLayout title={t('notFound.title')} lang={lang}>
+	<h1>{t('notFound.title')}</h1>
+	<p>{t('notFound.body')} <a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a></p>
+</BaseLayout>

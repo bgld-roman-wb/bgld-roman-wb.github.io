@@ -1,0 +1,10 @@
+---
+import EntryPage from '../../../components/pages/EntryPage.astro';
+import { entryStaticPaths } from '../../../lib/collection';
+
+export const getStaticPaths = entryStaticPaths;
+
+const { entry } = Astro.props;
+---
+
+<EntryPage entry={entry} lang="en" />

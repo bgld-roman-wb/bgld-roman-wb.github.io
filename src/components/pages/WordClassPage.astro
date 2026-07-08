@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import WordClassNav from '../browse/WordClassNav.astro';
+import EntryListItem from '../browse/EntryListItem.astro';
+import { entriesForWordClass } from '../../lib/collection';
+import { localizedWordClasses } from '../../lib/word-classes';
+import { useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	wordClass: string;
+	lang: Locale;
+}
+
+const { wordClass, lang } = Astro.props;
+const t = useTranslations(lang);
+const { classes, matching } = await entriesForWordClass(wordClass);
+const localizedClasses = localizedWordClasses(classes, lang);
+const currentLabel = localizedClasses.find((c) => c.code === wordClass)?.label ?? wordClass;
+---
+
+<BaseLayout title={`${t('browse.wordClassHeading')} — ${currentLabel}`} lang={lang}>
+	<h1>{t('browse.wordClassHeading')}</h1>
+	<WordClassNav classes={localizedClasses} current={wordClass} lang={lang} />
+	<p>{matching.length} {t('browse.entries')}</p>
+	<ul>
+		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} lang={lang} />)}
+	</ul>
+</BaseLayout>

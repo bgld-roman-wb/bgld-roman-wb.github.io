@@ -1,20 +1,24 @@
 ---
 import WordFamilyList from './WordFamilyList.astro';
+import type { Locale } from '../../i18n/ui';
+import { useTranslations } from '../../i18n/ui';
 
 interface Props {
 	wordFamily: { slug: string; lemma: { int: string; deu: string } }[];
 	base: { int: string | null; deu: string | null; slug: string | null; isSelf: boolean } | null;
 	currentSlug: string;
+	lang: Locale;
 }
 
-const { wordFamily, base, currentSlug } = Astro.props;
+const { wordFamily, base, currentSlug, lang } = Astro.props;
+const t = useTranslations(lang);
 const hasBaseLink = base && !base.isSelf && base.slug && base.slug !== currentSlug;
 const hasContent = wordFamily.length > 0 || hasBaseLink;
 ---
 
 {hasContent && (
 	<details>
-		<summary>Word family</summary>
-		<WordFamilyList members={wordFamily} base={base} currentSlug={currentSlug} />
+		<summary>{t('entry.wordFamily')}</summary>
+		<WordFamilyList members={wordFamily} base={base} currentSlug={currentSlug} lang={lang} />
 	</details>
 )}

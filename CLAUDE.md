@@ -94,7 +94,36 @@ INT : DEU / DEUTSCH : ENGLISH
 Plus UI affordances: a button to expand the full inflection paradigm, and a
 button to show the word family (linked to the individual related entries).
 
-## Status
-No site code yet — this is pre-implementation. Data pipeline (xlsx → site
-data) and site tech stack are not yet decided; treat those as open planning
-questions, not settled architecture.
+## Architecture
+- **Astro** static site, deployed to GitHub Pages via `.github/workflows/deploy.yml`
+  (rebuilds on every push to `main`; `ci.yml` validates PRs). `npm run build` =
+  `build:data` → `astro build` → `pagefind --site dist`.
+- **Data pipeline** (`scripts/pipeline/`, plain Node, run via `npm run build:data`)
+  parses `data/current/dictionary.xlsx` into `src/data/generated/entries.json`
+  (gitignored, regenerated each build). It expands paradigms, resolves word
+  families and etymology links, and validates against a corrections overlay +
+  error budget (see the corrections note above).
+- **Search**: Pagefind, indexing built HTML post-build. It auto-detects each
+  page's `<html lang>` and builds a per-language index, so search on the German
+  site returns German pages and vice versa. Paradigm/word-family toggles are
+  native `<details>` so their content stays indexable.
+
+### Localization (i18n)
+The **dictionary content is Burgenland Roman**; the **interface** is localized
+into two app languages, configured in `astro.config.mjs` (`defaultLocale: 'de'`,
+`prefixDefaultLocale: false`):
+- **German (default)** serves at the root (`/entry/…`); **English** at `/en/…`.
+  Page files mirror between `src/pages/` and `src/pages/en/`, both thin wrappers
+  around shared bodies in `src/components/pages/*`; `lang` is threaded through as
+  a prop. `src/i18n/ui.ts` holds the UI string catalog + helpers
+  (`useTranslations`, `localizePath`, `pathInLocale`, `glossFor`, `labelFor`).
+- **What the app language switches**: UI text, grammatical/etymology labels
+  (`.de` vs `.en` from the pipeline), and which meaning-gloss is shown (`DEUTSCH`
+  vs `ENGLISH` columns). The German and English glosses are two localizations of
+  the same meaning — **never show them together**.
+- **What it does NOT switch**: the Roman headword itself. Its INT (international)
+  vs DEU (German-based) spellings are dictionary content, shown the same in both
+  locales — INT is primary, DEU noted only when it differs. (This overrides the
+  literal `INT : DEU / DEUTSCH : ENGLISH` line in the struktur PDF template
+  above, which predates this decision.)
+- `LanguageSwitcher.astro` links to the same page in the other locale.

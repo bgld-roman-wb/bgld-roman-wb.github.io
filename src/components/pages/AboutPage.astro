@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<BaseLayout title={t('about.title')} lang={lang}>
+	<h1>{t('about.title')}</h1>
+	<p>{t('about.body1')}</p>
+	<p>{t('about.body2')}</p>
+</BaseLayout>

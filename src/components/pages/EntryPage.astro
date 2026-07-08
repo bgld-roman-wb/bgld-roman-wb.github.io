@@ -1,0 +1,31 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import EntryLayout from '../../layouts/EntryLayout.astro';
+import LemmaLine from '../entry/LemmaLine.astro';
+import GrammarLine from '../entry/GrammarLine.astro';
+import GlossList from '../entry/GlossList.astro';
+import SourceTag from '../entry/SourceTag.astro';
+import ParadigmToggle from '../entry/ParadigmToggle.astro';
+import WordFamilyToggle from '../entry/WordFamilyToggle.astro';
+import { glossFor, type Locale } from '../../i18n/ui';
+
+interface Props {
+	entry: CollectionEntry<'entries'>;
+	lang: Locale;
+}
+
+const { entry, lang } = Astro.props;
+const { data } = entry;
+const description = data.glosses.map((g) => glossFor(g, lang)).filter(Boolean).join(', ');
+---
+
+<EntryLayout title={data.lemma.int} description={description} lang={lang}>
+	<article>
+		<LemmaLine lemma={data.lemma} composition={data.composition} variation={data.variation} reconstruction={data.reconstruction} lang={lang} />
+		<GrammarLine class1={data.wordClass.class1} class2={data.wordClass.class2} flexion1={data.flexion.flexion1} flexion2={data.flexion.flexion2} flexion3={data.flexion.flexion3} lang={lang} />
+		<GlossList glosses={data.glosses} lang={lang} />
+		<SourceTag source={data.source} lang={lang} />
+		<ParadigmToggle paradigm={data.paradigm} lang={lang} />
+		<WordFamilyToggle wordFamily={data.wordFamily} base={data.base} currentSlug={data.slug} lang={lang} />
+	</article>
+</EntryLayout>

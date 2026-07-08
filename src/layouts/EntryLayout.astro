@@ -1,15 +1,18 @@
 ---
 import BaseLayout from './BaseLayout.astro';
+import { localizePath, useTranslations, type Locale } from '../i18n/ui';
 
 interface Props {
 	title: string;
 	description?: string;
+	lang: Locale;
 }
 
-const { title, description } = Astro.props;
+const { title, description, lang } = Astro.props;
+const t = useTranslations(lang);
 ---
 
-<BaseLayout title={title} description={description}>
-	<p style="margin-block-start: 0;"><a href="/browse/alphabetical/a">&larr; Browse entries</a></p>
+<BaseLayout title={title} description={description} lang={lang}>
+	<p style="margin-block-start: 0;"><a href={localizePath('/browse/alphabetical/a', lang)}>{t('browse.backToEntries')}</a></p>
 	<slot />
 </BaseLayout>

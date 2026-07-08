@@ -1,4 +1,7 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { useTranslations } from '../../i18n/ui';
+
 interface ParadigmForm {
 	label: (string | null)[];
 	int?: string | null;
@@ -14,30 +17,31 @@ interface ParadigmForm {
 interface Props {
 	kind: 'none' | 'exist' | 'gendered' | 'noun' | 'verb' | 'error';
 	forms: ParadigmForm[];
+	lang: Locale;
 }
 
-const { kind, forms } = Astro.props;
+const { kind, forms, lang } = Astro.props;
+const t = useTranslations(lang);
 
 function labelText(label: (string | null)[]) {
 	return label.filter(Boolean).join(' ');
 }
 ---
 
-{kind === 'error' && <p class="data-unavailable">Inflection data unavailable for this entry.</p>}
+{kind === 'error' && <p class="data-unavailable">{t('entry.inflectionUnavailable')}</p>}
 
 {kind === 'exist' && (
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">Form</th><th scope="col">Roman</th><th scope="col">German</th><th scope="col">English</th></tr>
+				<tr><th scope="col">{t('table.form')}</th><th scope="col">Roman</th><th scope="col">{t('table.meaning')}</th></tr>
 			</thead>
 			<tbody>
 				{forms.map((f) => (
 					<tr>
 						<th scope="row">{labelText(f.label)}</th>
 						<td>{f.int}</td>
-						<td>{f.german}</td>
-						<td>{f.english}</td>
+						<td>{lang === 'de' ? f.german : f.english}</td>
 					</tr>
 				))}
 			</tbody>
@@ -49,7 +53,7 @@ function labelText(label: (string | null)[]) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">Form</th><th scope="col">INT (m.)</th><th scope="col">INT (f.)</th><th scope="col">DEU (m.)</th><th scope="col">DEU (f.)</th></tr>
+				<tr><th scope="col">{t('table.form')}</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th></tr>
 			</thead>
 			<tbody>
 				{forms.map((f) => (
@@ -70,7 +74,7 @@ function labelText(label: (string | null)[]) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">Form</th><th scope="col">INT</th><th scope="col">DEU</th></tr>
+				<tr><th scope="col">{t('table.form')}</th><th scope="col">INT</th><th scope="col">DEU</th></tr>
 			</thead>
 			<tbody>
 				{forms.map((f) => (

@@ -1,4 +1,7 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { labelFor } from '../../i18n/ui';
+
 interface GramLabel {
 	code: string | null;
 	en: string | null;
@@ -15,27 +18,22 @@ interface Props {
 	flexion1: string | null;
 	flexion2: Pair | null;
 	flexion3: Pair | null;
+	lang: Locale;
 }
 
-const { class1, class2, flexion1, flexion2, flexion3 } = Astro.props;
+const { class1, class2, flexion1, flexion2, flexion3, lang } = Astro.props;
 
-function labelText(g: GramLabel) {
-	return g.en ?? g.code ?? '';
-}
-
+// Flexion markers are Roman morphemes (dictionary content) — show international (INT) form.
 const flexParts = [flexion2, flexion3]
 	.filter((p): p is Pair => p != null)
-	.map((p) => (p.int && p.deu && p.int !== p.deu ? `${p.int} : ${p.deu}` : (p.int ?? p.deu ?? '')));
+	.map((p) => p.int ?? p.deu ?? '')
+	.filter(Boolean);
 ---
 
 <p style="color: var(--color-muted);">
-	{class1.code && (
-		<span title={class1.code}>{labelText(class1)}.</span>
-	)}
+	{class1.code && <span title={class1.code}>{labelFor(class1, lang)}.</span>}
 	{' '}
-	{class2.code && (
-		<span title={class2.code}>{labelText(class2)}.</span>
-	)}
+	{class2.code && <span title={class2.code}>{labelFor(class2, lang)}.</span>}
 	{' '}
 	{flexion1 && <span>{flexion1}</span>}
 	{flexParts.length > 0 && <span>&nbsp;[{flexParts.join('; ')}]</span>}

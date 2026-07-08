@@ -1,19 +1,21 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { glossFor } from '../../i18n/ui';
+
 interface Props {
 	glosses: { de: string | null; en: string | null }[];
+	lang: Locale;
 }
 
-const { glosses } = Astro.props;
+const { glosses, lang } = Astro.props;
+
+// Show only the meaning in the active app language — the two gloss languages are localizations of
+// the same meaning, not to be shown together.
+const localized = glosses.map((g) => glossFor(g, lang)).filter((g): g is string => Boolean(g));
 ---
 
-{glosses.length > 0 && (
+{localized.length > 0 && (
 	<ol style="padding-inline-start: var(--space-4);">
-		{glosses.map((gloss) => (
-			<li>
-				{gloss.de && <span>{gloss.de}</span>}
-				{gloss.de && gloss.en && <span style="color: var(--color-muted);"> : </span>}
-				{gloss.en && <span>{gloss.en}</span>}
-			</li>
-		))}
+		{localized.map((gloss) => <li>{gloss}</li>)}
 	</ol>
 )}

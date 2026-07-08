@@ -1,15 +1,19 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { glossFor, localizePath } from '../../i18n/ui';
+
 interface Props {
 	slug: string;
 	lemma: { int: string; deu: string };
 	glosses: { de: string | null; en: string | null }[];
+	lang: Locale;
 }
 
-const { slug, lemma, glosses } = Astro.props;
-const firstGloss = glosses.find((g) => g.de || g.en);
+const { slug, lemma, glosses, lang } = Astro.props;
+const firstGloss = glosses.map((g) => glossFor(g, lang)).find((g): g is string => Boolean(g));
 ---
 
 <li>
-	<a href={`/entry/${slug}`}><strong>{lemma.int}</strong></a>
-	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss.de ?? firstGloss.en}</span>}
+	<a href={localizePath(`/entry/${slug}`, lang)}><strong>{lemma.int}</strong></a>
+	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss}</span>}
 </li>

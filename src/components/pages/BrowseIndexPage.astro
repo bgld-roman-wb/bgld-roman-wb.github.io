@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LetterNav from '../browse/LetterNav.astro';
+import { allLetters } from '../../lib/collection';
+import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const letters = await allLetters();
+---
+
+<BaseLayout title={t('browse.title')} lang={lang}>
+	<h1>{t('browse.title')}</h1>
+	<section>
+		<h2>{t('browse.alphabetical')}</h2>
+		<LetterNav letters={letters} lang={lang} />
+	</section>
+	<section>
+		<h2>{t('browse.byWordClass')}</h2>
+		<p>
+			<a href={localizePath('/browse/word-class/N', lang)}>N</a> ·
+			<a href={localizePath('/browse/word-class/V', lang)}>V</a> ·
+			<a href={localizePath('/browse/word-class/ADJ', lang)}>ADJ</a> — {t('browse.byWordClassNote')}
+		</p>
+	</section>
+</BaseLayout>

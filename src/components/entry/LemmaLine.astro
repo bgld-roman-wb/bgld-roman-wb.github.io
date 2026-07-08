@@ -1,4 +1,7 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { useTranslations } from '../../i18n/ui';
+
 interface Pair {
 	int: string | null;
 	deu: string | null;
@@ -9,19 +12,25 @@ interface Props {
 	composition: Pair | null;
 	variation: Pair | null;
 	reconstruction: Pair | null;
+	lang: Locale;
 }
 
-const { lemma, composition, variation, reconstruction } = Astro.props;
+const { lemma, composition, variation, reconstruction, lang } = Astro.props;
+const t = useTranslations(lang);
 
-function renderPair(pair: Pair) {
-	if (pair.int && pair.deu && pair.int !== pair.deu) return `${pair.int} : ${pair.deu}`;
-	return pair.int ?? pair.deu ?? '';
-}
+// The Roman headword is dictionary content, shown in international (INT) orthography regardless of
+// app language. The German-based (DEU) spelling is noted only when it actually differs.
+const showDeu = lemma.deu && lemma.deu !== lemma.int;
 
-const bracketed = [composition, variation, reconstruction].filter((p): p is Pair => p != null).map(renderPair);
+// Bracketed extras (composition / variation / reconstruction) are also Roman forms — show INT only.
+const bracketed = [composition, variation, reconstruction]
+	.filter((p): p is Pair => p != null)
+	.map((p) => p.int ?? p.deu ?? '')
+	.filter(Boolean);
 ---
 
 <p style="font-size: 1.5rem; margin-block-end: var(--space-2);">
-	<strong>{renderPair(lemma)}</strong>
+	<strong>{lemma.int}</strong>
+	{showDeu && <span style="color: var(--color-muted); font-size: 0.7em;">&nbsp;· {t('entry.deuSpelling')}: {lemma.deu}</span>}
 	{bracketed.length > 0 && <span style="color: var(--color-muted); font-size: 0.7em;">&nbsp;[{bracketed.join('; ')}]</span>}
 </p>

@@ -1,4 +1,7 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { labelFor, localizePath, useTranslations } from '../../i18n/ui';
+
 interface Pair {
 	int: string | null;
 	deu: string | null;
@@ -12,25 +15,27 @@ interface Props {
 		foreignForm: Pair | null;
 		derivationSlug: string | null;
 	};
+	lang: Locale;
 }
 
-const { source } = Astro.props;
+const { source, lang } = Astro.props;
+const t = useTranslations(lang);
 ---
 
 {source.code && (
 	<p style="font-size: 0.9em; color: var(--color-muted);">
 		{source.isDerivation ? (
 			<>
-				derived from{' '}
+				{t('entry.derivedFrom')}{' '}
 				{source.derivationSlug ? (
-					<a href={`/entry/${source.derivationSlug}`}>base word</a>
+					<a href={localizePath(`/entry/${source.derivationSlug}`, lang)}>{t('entry.derivedFromBase')}</a>
 				) : (
-					<span>base word</span>
+					<span>{t('entry.derivedFromBase')}</span>
 				)}
 			</>
 		) : (
 			<>
-				{source.label?.en ?? source.code}
+				{labelFor(source.label, lang) ?? source.code}
 				{source.foreignForm?.int && <> — {source.foreignForm.int}</>}
 			</>
 		)}

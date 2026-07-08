@@ -1,16 +1,20 @@
 ---
+import type { Locale } from '../../i18n/ui';
+import { localizePath } from '../../i18n/ui';
+
 interface Props {
 	classes: { code: string; label: string }[];
 	current?: string;
+	lang: Locale;
 }
 
-const { classes, current } = Astro.props;
+const { classes, current, lang } = Astro.props;
 ---
 
 <nav aria-label="Word classes" style="display: flex; flex-wrap: wrap; gap: var(--space-1); margin-block-end: var(--space-3);">
 	{classes.map((c) => (
 		<a
-			href={`/browse/word-class/${c.code}`}
+			href={localizePath(`/browse/word-class/${c.code}`, lang)}
 			aria-current={c.code === current ? 'page' : undefined}
 			style={`padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: 0.25rem; text-decoration: none; ${c.code === current ? 'background: var(--color-accent); color: var(--color-accent-contrast); border-color: var(--color-accent);' : ''}`}
 		>

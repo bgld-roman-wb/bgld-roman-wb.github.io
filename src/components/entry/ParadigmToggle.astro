@@ -1,5 +1,7 @@
 ---
 import ParadigmTable from './ParadigmTable.astro';
+import type { Locale } from '../../i18n/ui';
+import { useTranslations } from '../../i18n/ui';
 
 interface ParadigmForm {
 	label: (string | null)[];
@@ -18,14 +20,16 @@ interface Props {
 		kind: 'none' | 'exist' | 'gendered' | 'noun' | 'verb' | 'error';
 		forms: ParadigmForm[];
 	};
+	lang: Locale;
 }
 
-const { paradigm } = Astro.props;
+const { paradigm, lang } = Astro.props;
+const t = useTranslations(lang);
 ---
 
 {paradigm.kind !== 'none' && (
 	<details>
-		<summary>Inflection paradigm</summary>
-		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} />
+		<summary>{t('entry.paradigm')}</summary>
+		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} lang={lang} />
 	</details>
 )}

@@ -1,21 +1,5 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import LetterNav from '../../components/browse/LetterNav.astro';
-import { getAvailableLetters } from '../../lib/alphabet';
-
-const entries = await getCollection('entries');
-const letters = getAvailableLetters(entries.map((e) => e.data.lemma.int));
+import BrowseIndexPage from '../../components/pages/BrowseIndexPage.astro';
 ---
 
-<BaseLayout title="Browse">
-	<h1>Browse the dictionary</h1>
-	<section>
-		<h2>Alphabetically</h2>
-		<LetterNav letters={letters} />
-	</section>
-	<section>
-		<h2>By word class</h2>
-		<p><a href={`/browse/word-class/N`}>Nouns</a>, <a href={`/browse/word-class/V`}>Verbs</a>, <a href={`/browse/word-class/ADJ`}>Adjectives</a>, and more — pick a letter above to start browsing, entries link to their word class too.</p>
-	</section>
-</BaseLayout>
+<BrowseIndexPage lang="de" />

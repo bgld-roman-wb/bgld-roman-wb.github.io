@@ -1,0 +1,10 @@
+---
+import WordClassPage from '../../../../components/pages/WordClassPage.astro';
+import { wordClassStaticPaths } from '../../../../lib/collection';
+
+export const getStaticPaths = wordClassStaticPaths;
+
+const { wordClass } = Astro.props;
+---
+
+<WordClassPage wordClass={wordClass} lang="en" />

@@ -1,18 +1,29 @@
 ---
 import SearchBox from './SearchBox.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import type { Locale } from '../../i18n/ui';
+import { localizePath, useTranslations } from '../../i18n/ui';
+
+interface Props {
+	lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
 ---
 
 <header style="border-bottom: 1px solid var(--color-border);">
 	<div class="container" style="display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); padding-block: var(--space-3);">
 		<p style="margin: 0; font-weight: 700;">
-			<a href="/" style="color: inherit; text-decoration: none;">Burgenland Roman Dictionary</a>
+			<a href={localizePath('/', lang)} style="color: inherit; text-decoration: none;">{t('site.title')}</a>
 		</p>
-		<nav aria-label="Main" style="display: flex; gap: var(--space-3); margin-inline-start: auto;">
-			<a href="/browse/alphabetical/a">Browse</a>
-			<a href="/about">About</a>
+		<nav aria-label="Main" style="display: flex; gap: var(--space-3); margin-inline-start: auto; align-items: center;">
+			<a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a>
+			<a href={localizePath('/about', lang)}>{t('nav.about')}</a>
+			<LanguageSwitcher lang={lang} />
 		</nav>
 		<div style="flex-basis: 100%;">
-			<SearchBox />
+			<SearchBox lang={lang} />
 		</div>
 	</div>
 </header>

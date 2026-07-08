@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LetterNav from '../browse/LetterNav.astro';
+import EntryListItem from '../browse/EntryListItem.astro';
+import { entriesForLetter } from '../../lib/collection';
+import { useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	letter: string;
+	lang: Locale;
+}
+
+const { letter, lang } = Astro.props;
+const t = useTranslations(lang);
+const { letters, matching } = await entriesForLetter(letter);
+---
+
+<BaseLayout title={`${t('browse.letterHeading')} — ${letter.toUpperCase()}`} lang={lang}>
+	<h1>{t('browse.letterHeading')}</h1>
+	<LetterNav letters={letters} current={letter} lang={lang} />
+	<p>{matching.length} {t('browse.entries')}</p>
+	<ul>
+		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} lang={lang} />)}
+	</ul>
+</BaseLayout>
