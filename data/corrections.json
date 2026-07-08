@@ -1,7 +1,7 @@
 {
   "_readme": "PROPOSED corrections applied at BUILD TIME on top of data/current/dictionary.xlsx. The source spreadsheet is NEVER modified — these are hypotheses pending the professor's review. Once the professor folds a correction into a future snapshot, delete it from here. See data/CORRECTIONS.md for the human-readable rationale. Each correction records how many entries it affects so high-impact fixes are distinguishable from trivial ones.",
-  "acceptedErrorBudget": 15,
-  "_acceptedErrorBudgetNote": "The build fails if the number of UNRESOLVED data errors (after corrections) exceeds this. It absorbs a small long-tail of genuine one-off data issues that need the professor, while still failing loudly if a snapshot regresses badly (e.g. a shifted column producing hundreds of errors). Lower it toward 0 as the professor resolves the remaining issues; currently ~1 error remains (a corrupted cell at GLOSSARY row 1538) plus headroom for future snapshots.",
+  "acceptedErrorBudget": 10,
+  "_acceptedErrorBudgetNote": "The build fails if the number of UNRESOLVED data errors (after corrections) exceeds this. It absorbs a small long-tail of genuine one-off data issues that need the professor, while still failing loudly if a snapshot regresses badly (e.g. a shifted column producing hundreds of errors). All known errors are currently corrected (0 remaining); this headroom absorbs new one-offs in future snapshots. Lower toward 0 as the data stabilizes.",
   "gramAbbreviationAdditions": [
     {
       "code": "INTR",
@@ -57,6 +57,14 @@
       "from": "NFPE-∅-01",
       "to": "NFPE-∅-1",
       "rationale": "GLOSSARY row 6869 (másek) references 'NFPE-∅-01', but F-DECL spells the key 'NFPE-∅-1' (single digit). Zero-padding typo."
+    }
+  ],
+  "glossaryCellOverrides": [
+    {
+      "row": 1538,
+      "field": "wordClass1",
+      "value": "N",
+      "rationale": "The Word class 1 cell for the entry 'briater-i/-kíja' (Brüter/in / 'breeder') contains 'N+V1536N1536:U1536', a leaked spreadsheet formula/cell-range fragment rather than a grammatical code. The entry is a noun (M/F flexion, NMF-02 nominal paradigm, noun glosses), so the intended word class is 'N'. Overriding the single cell keeps the real word in the dictionary instead of dropping it."
     }
   ]
 }

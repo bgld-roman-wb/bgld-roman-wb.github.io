@@ -22,6 +22,7 @@ export async function writeReport(outputDir, validator, entryCount, corrections)
 			...correctionSummary.gramAdditions.map((g) => `gram "${g.code}" (${g.uses} entries)`),
 			...correctionSummary.gramAliases.map((a) => `gram ${a.from}→${a.to} (${a.uses} entries)`),
 			...correctionSummary.paradigmKeyAliases.map((a) => `paradigm ${a.from}→${a.to} (${a.uses} entries)`),
+			...correctionSummary.cellOverrides.map((o) => `cell row ${o.row}.${o.field}="${o.value}" (${o.uses} entries)`),
 		];
 		if (applied.length > 0) {
 			console.log(`Corrections applied (source xlsx untouched): ${applied.join(', ')}.`);

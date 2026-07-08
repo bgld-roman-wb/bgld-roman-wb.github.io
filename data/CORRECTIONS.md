@@ -35,6 +35,9 @@ now and track them transparently.
 - **Paradigm key aliases** — an inflection-paradigm key referenced in
   `GLOSSARY` that is a typo of a key defined in a `*-DECL` / `V-CONJG` sheet
   (e.g. `NME-i` → `NM-E-i`, affecting ~175 entries).
+- **Cell overrides** — a single corrupted `GLOSSARY` cell, too specific to
+  express as a code alias, corrected by row + field (e.g. row 1538's Word class
+  cell held a leaked spreadsheet formula fragment; overridden to `N`).
 
 ## The deploy gate
 
@@ -45,12 +48,14 @@ future snapshot regresses badly (e.g. a shifted column producing hundreds of
 errors). The full list of every remaining issue is written to
 `src/data/generated/warnings.json` on every build.
 
-## Currently unresolved (for the professor)
+## For the professor
 
-As of this writing, one issue is intentionally left uncorrected because it
-isn't a confident typo fix:
+All the corrections in `corrections.json` are proposed fixes to confirm and
+fold back into the source spreadsheet, after which they can be deleted here.
+One is worth explicit attention because it patched a corrupted cell rather than
+a simple typo:
 
-- **GLOSSARY row 1538** — the Word class cell contains
-  `N+V1536N1536:U1536`, which looks like a broken spreadsheet formula / cell
-  reference rather than a grammatical code. Needs the professor to restore the
-  intended value.
+- **GLOSSARY row 1538** (`briater-i/-kíja`, "Brüter/in" / breeder) — the Word
+  class 1 cell contained `N+V1536N1536:U1536`, a leaked spreadsheet formula /
+  cell-range fragment. We overrode it to `N` (the entry is a noun), but the
+  professor should restore the intended value at the source.

@@ -30,11 +30,17 @@ export async function loadCorrections(path = CORRECTIONS_PATH) {
 		paradigmKeyAliases.set(alias.from, { to: alias.to, rationale: alias.rationale, uses: 0 });
 	}
 
+	// Overrides for individual corrupted GLOSSARY cells (row + field -> corrected value), for
+	// cases too specific to express as a code alias — e.g. a single cell holding a leaked
+	// spreadsheet formula fragment. Keyed by GLOSSARY row number.
+	const cellOverrides = (raw.glossaryCellOverrides ?? []).map((o) => ({ ...o, uses: 0 }));
+
 	return {
 		acceptedErrorBudget: raw.acceptedErrorBudget ?? 0,
 		gramAdditions,
 		gramAliases,
 		paradigmKeyAliases,
+		cellOverrides,
 
 		// A brand-new gram code missing from the sheet (e.g. INTR) — returns its label, counts uses.
 		gramAdditionFor(code) {
@@ -60,12 +66,27 @@ export async function loadCorrections(path = CORRECTIONS_PATH) {
 			return alias.to;
 		},
 
+		// Applies any per-cell overrides to the parsed GLOSSARY rows in place, counting uses.
+		// A miss (override targets a row/field that no longer exists in the snapshot) is left for
+		// the caller to warn about, since it means the correction has gone stale.
+		applyCellOverrides(rows) {
+			const byRow = new Map(rows.map((r) => [r.rowNumber, r]));
+			for (const override of cellOverrides) {
+				const row = byRow.get(override.row);
+				if (row && override.field in row) {
+					row[override.field] = override.value;
+					override.uses++;
+				}
+			}
+		},
+
 		// For the build report.
 		summary() {
 			return {
 				gramAdditions: [...gramAdditions.values()].map((g) => ({ code: g.code, uses: g.uses })),
 				gramAliases: [...gramAliases.entries()].map(([from, a]) => ({ from, to: a.to, uses: a.uses })),
 				paradigmKeyAliases: [...paradigmKeyAliases.entries()].map(([from, a]) => ({ from, to: a.to, uses: a.uses })),
+				cellOverrides: cellOverrides.map((o) => ({ row: o.row, field: o.field, value: o.value, uses: o.uses })),
 			};
 		},
 	};

@@ -53,6 +53,14 @@ async function main() {
 	const workbook = await loadWorkbook(DATA_XLSX_PATH);
 
 	const rows = readGlossaryRows(workbook, validator);
+	corrections.applyCellOverrides(rows);
+	// A cell override that matched nothing is stale (the professor likely fixed it at the source
+	// or rows shifted) — surface it so it gets pruned from corrections.json rather than lingering.
+	for (const o of corrections.summary().cellOverrides) {
+		if (o.uses === 0) {
+			validator.warn('stale-cell-override', `corrections.json cell override for GLOSSARY row ${o.row} field "${o.field}" matched no row — remove it if the source is fixed`);
+		}
+	}
 	const abbreviations = resolveAbbreviations(workbook, validator);
 	const paradigmIndex = buildParadigmIndex(workbook, validator);
 	const assignSlug = createSlugAssigner();
