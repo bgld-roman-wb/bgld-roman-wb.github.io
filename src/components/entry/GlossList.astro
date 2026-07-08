@@ -15,7 +15,7 @@ const localized = glosses.map((g) => glossFor(g, lang)).filter((g): g is string 
 ---
 
 {localized.length > 0 && (
-	<ol style="padding-inline-start: var(--space-4);">
+	<ol style="padding-inline-start: var(--space-4);" data-pagefind-weight="8">
 		{localized.map((gloss) => <li>{gloss}</li>)}
 	</ol>
 )}

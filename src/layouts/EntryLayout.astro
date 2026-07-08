@@ -13,6 +13,6 @@ const t = useTranslations(lang);
 ---
 
 <BaseLayout title={title} description={description} lang={lang}>
-	<p style="margin-block-start: 0;"><a href={localizePath('/browse/alphabetical/a', lang)}>{t('browse.backToEntries')}</a></p>
+	<p style="margin-block-start: 0;" data-pagefind-ignore><a href={localizePath('/browse/alphabetical/a', lang)}>{t('browse.backToEntries')}</a></p>
 	<slot />
 </BaseLayout>

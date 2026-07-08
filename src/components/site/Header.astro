@@ -14,14 +14,16 @@ const t = useTranslations(lang);
 
 <header>
 	<div class="container header-inner">
-		<p class="site-title">
-			<a href={localizePath('/', lang)} style="color: inherit; text-decoration: none;">{t('site.title')}</a>
-		</p>
+		<div class="header-top">
+			<p class="site-title">
+				<a href={localizePath('/', lang)} style="color: inherit; text-decoration: none;">{t('site.title')}</a>
+			</p>
+			<LanguageSwitcher lang={lang} />
+		</div>
 		<nav class="main-nav" aria-label="Main">
 			<a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a>
 			<a href={localizePath('/abbreviations', lang)}>{t('nav.abbreviations')}</a>
 			<a href={localizePath('/about', lang)}>{t('nav.about')}</a>
-			<LanguageSwitcher lang={lang} />
 		</nav>
 		<div class="search-row">
 			<SearchBox lang={lang} />
@@ -36,9 +38,16 @@ const t = useTranslations(lang);
 	.header-inner {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-3);
+		gap: var(--space-2) var(--space-3);
 		padding-block: var(--space-3);
+	}
+	.header-top {
+		display: flex;
+		flex-basis: 100%;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+		min-width: 0;
 	}
 	.site-title {
 		margin: 0;
@@ -49,7 +58,6 @@ const t = useTranslations(lang);
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-2) var(--space-3);
-		margin-inline-start: auto;
 		align-items: center;
 		max-width: 100%;
 		min-width: 0;
@@ -59,7 +67,6 @@ const t = useTranslations(lang);
 		min-width: 0;
 	}
 	@media (max-width: 40rem) {
-		.site-title,
 		.main-nav {
 			flex-basis: 100%;
 		}

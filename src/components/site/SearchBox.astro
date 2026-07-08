@@ -22,7 +22,15 @@ const t = useTranslations(lang);
 <script is:inline define:vars={{ placeholder: t('search.placeholder') }}>
 	window.addEventListener('DOMContentLoaded', () => {
 		if (window.PagefindUI) {
-			new window.PagefindUI({ element: '#search', showSubResults: true, translations: { placeholder } });
+			new window.PagefindUI({
+				element: '#search',
+				showSubResults: true,
+				translations: { placeholder },
+				ranking: {
+					pageLength: 0,
+					termFrequency: 0,
+				},
+			});
 		}
 	});
 </script>

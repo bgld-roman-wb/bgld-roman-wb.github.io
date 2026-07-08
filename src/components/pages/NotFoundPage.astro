@@ -10,7 +10,7 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
 
-<BaseLayout title={t('notFound.title')} lang={lang}>
+<BaseLayout title={t('notFound.title')} lang={lang} searchIndex={false}>
 	<h1>{t('notFound.title')}</h1>
 	<p>{t('notFound.body')} <a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a></p>
 </BaseLayout>

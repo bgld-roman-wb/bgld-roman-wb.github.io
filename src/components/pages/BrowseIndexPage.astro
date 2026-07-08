@@ -13,7 +13,7 @@ const t = useTranslations(lang);
 const letters = await allLetters();
 ---
 
-<BaseLayout title={t('browse.title')} lang={lang}>
+<BaseLayout title={t('browse.title')} lang={lang} searchIndex={false}>
 	<h1>{t('browse.title')}</h1>
 	<section>
 		<h2>{t('browse.alphabetical')}</h2>

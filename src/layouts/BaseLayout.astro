@@ -8,9 +8,10 @@ interface Props {
 	title: string;
 	description?: string;
 	lang?: Locale;
+	searchIndex?: boolean;
 }
 
-const { title, description, lang = defaultLang } = Astro.props;
+const { title, description, lang = defaultLang, searchIndex = true } = Astro.props;
 ---
 
 <!doctype html>
@@ -24,7 +25,7 @@ const { title, description, lang = defaultLang } = Astro.props;
 	<body>
 		<a class="skip-link" href="#main">Skip to content</a>
 		<Header lang={lang} />
-		<main id="main" class="container" style="padding-block: var(--space-4);">
+		<main id="main" class="container" style="padding-block: var(--space-4);" data-pagefind-body={searchIndex ? true : undefined}>
 			<slot />
 		</main>
 		<Footer lang={lang} />

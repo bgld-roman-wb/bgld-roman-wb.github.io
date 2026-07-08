@@ -15,7 +15,7 @@ const t = useTranslations(lang);
 const { letters, matching } = await entriesForLetter(letter);
 ---
 
-<BaseLayout title={`${t('browse.letterHeading')} — ${letter.toUpperCase()}`} lang={lang}>
+<BaseLayout title={`${t('browse.letterHeading')} — ${letter.toUpperCase()}`} lang={lang} searchIndex={false}>
 	<h1>{t('browse.letterHeading')}</h1>
 	<LetterNav letters={letters} current={letter} lang={lang} />
 	<p>{matching.length} {t('browse.entries')}</p>

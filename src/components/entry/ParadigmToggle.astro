@@ -29,8 +29,8 @@ const t = useTranslations(lang);
 ---
 
 {paradigm.kind !== 'none' && (
-	<details>
-		<summary>{t('entry.paradigm')}</summary>
+	<details data-pagefind-weight="0.4">
+		<summary data-pagefind-ignore>{t('entry.paradigm')}</summary>
 		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} lang={lang} />
 	</details>
 )}

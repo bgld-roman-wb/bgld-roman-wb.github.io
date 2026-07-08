@@ -23,8 +23,8 @@ const hasContent = wordFamily.length > 0 || hasBaseLink;
 ---
 
 {hasContent && (
-	<details>
-		<summary>{t('entry.wordFamily')}</summary>
+	<details data-pagefind-weight="0.75">
+		<summary data-pagefind-ignore>{t('entry.wordFamily')}</summary>
 		<WordFamilyList members={wordFamily} base={base} currentSlug={currentSlug} lang={lang} />
 	</details>
 )}

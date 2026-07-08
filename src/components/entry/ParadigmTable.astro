@@ -36,6 +36,17 @@ function displayLabel(form: ParadigmForm) {
 function codeLabel(form: ParadigmForm) {
 	return form.labelDisplay?.code || labelText(form.label);
 }
+
+// The two Roman orthographies (DEU primary, INT secondary) frequently coincide, differing only
+// where the international spelling uses letters like č/š/ž. Rather than print every value twice:
+//   - if INT equals DEU across the WHOLE table, collapse to a single "Roman" column;
+//   - otherwise keep both columns, but show a ditto mark where a given INT cell matches its DEU
+//     cell, so the international column only ever carries a value where it genuinely diverges.
+const sameNV = (f: ParadigmForm) => (f.int || '') === (f.deu || '');
+const sameGen = (f: ParadigmForm) => (f.intM || '') === (f.deuM || '') && (f.intF || '') === (f.deuF || '');
+const intRedundantNV = forms.every(sameNV);
+const intRedundantGen = forms.every(sameGen);
+const DITTO = '〃';
 ---
 
 {kind === 'error' && <p class="data-unavailable">{t('entry.inflectionUnavailable')}</p>}
@@ -63,7 +74,11 @@ function codeLabel(form: ParadigmForm) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th></tr>
+				{intRedundantGen ? (
+					<tr><th scope="col">{t('table.form')}</th><th scope="col">{t('table.masc')}</th><th scope="col">{t('table.fem')}</th></tr>
+				) : (
+					<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th></tr>
+				)}
 			</thead>
 			<tbody>
 				{forms.map((f) => (
@@ -71,8 +86,17 @@ function codeLabel(form: ParadigmForm) {
 						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
 						<td>{f.deuM}</td>
 						<td>{f.deuF}</td>
-						<td>{f.intM}</td>
-						<td>{f.intF}</td>
+						{!intRedundantGen && (sameGen(f) ? (
+							<>
+								<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
+								<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
+							</>
+						) : (
+							<>
+								<td>{f.intM}</td>
+								<td>{f.intF}</td>
+							</>
+						))}
 					</tr>
 				))}
 			</tbody>
@@ -84,17 +108,33 @@ function codeLabel(form: ParadigmForm) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU</th><th scope="col">INT</th></tr>
+				{intRedundantNV ? (
+					<tr><th scope="col">{t('table.form')}</th><th scope="col">Roman</th></tr>
+				) : (
+					<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU</th><th scope="col">INT</th></tr>
+				)}
 			</thead>
 			<tbody>
 				{forms.map((f) => (
 					<tr>
 						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
 						<td>{f.deu}</td>
-						<td>{f.int}</td>
+						{!intRedundantNV && (sameNV(f) ? (
+							<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
+						) : (
+							<td>{f.int}</td>
+						))}
 					</tr>
 				))}
 			</tbody>
 		</table>
 	</div>
 )}
+
+<style>
+	.ditto {
+		color: var(--color-muted);
+		text-align: center;
+		user-select: none;
+	}
+</style>

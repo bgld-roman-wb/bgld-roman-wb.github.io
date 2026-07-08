@@ -28,15 +28,15 @@ function firstGloss(glosses: { de: string | null; en: string | null }[]) {
 	{showBaseBadge && (
 		<li>
 			<a href={localizePath(`/entry/${base!.slug}`, lang)}>{base!.deu ?? base!.int}</a>
-			{firstGloss(base!.glosses) && <span class="muted"> — {firstGloss(base!.glosses)}</span>}
+			{firstGloss(base!.glosses) && <span class="muted" data-pagefind-ignore> — {firstGloss(base!.glosses)}</span>}
 			{' '}
-			<span class="badge">{t('entry.baseWord')}</span>
+			<span class="badge" data-pagefind-ignore>{t('entry.baseWord')}</span>
 		</li>
 	)}
 	{members.map((m) => (
 		<li>
 			<a href={localizePath(`/entry/${m.slug}`, lang)}>{m.lemma.deu}</a>
-			{firstGloss(m.glosses) && <span class="muted"> — {firstGloss(m.glosses)}</span>}
+			{firstGloss(m.glosses) && <span class="muted" data-pagefind-ignore> — {firstGloss(m.glosses)}</span>}
 		</li>
 	))}
 </ul>
