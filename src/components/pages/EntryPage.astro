@@ -19,7 +19,7 @@ const { data } = entry;
 const description = data.glosses.map((g) => glossFor(g, lang)).filter(Boolean).join(', ');
 ---
 
-<EntryLayout title={data.lemma.int} description={description} lang={lang}>
+<EntryLayout title={data.lemma.deu} description={description} lang={lang}>
 	<article>
 		<LemmaLine lemma={data.lemma} composition={data.composition} variation={data.variation} reconstruction={data.reconstruction} lang={lang} />
 		<GrammarLine class1={data.wordClass.class1} class2={data.wordClass.class2} flexion1={data.flexion.flexion1} flexion2={data.flexion.flexion2} flexion3={data.flexion.flexion3} lang={lang} />

@@ -23,10 +23,10 @@ interface Props {
 
 const { class1, class2, flexion1, flexion2, flexion3, lang } = Astro.props;
 
-// Flexion markers are Roman morphemes (dictionary content) — show international (INT) form.
+// Flexion markers are Roman morphemes (dictionary content) — primary orthography is DEU.
 const flexParts = [flexion2, flexion3]
 	.filter((p): p is Pair => p != null)
-	.map((p) => p.int ?? p.deu ?? '')
+	.map((p) => p.deu ?? p.int ?? '')
 	.filter(Boolean);
 ---
 

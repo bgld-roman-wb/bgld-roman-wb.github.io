@@ -4,7 +4,11 @@ import { ARROW_MARKERS } from './constants.mjs';
 // e.g. lemma "acél-o" (hyphen + stress accent) is pointed to as base "acelo" (no hyphen, no
 // accent). Confirmed from real data: stress accents (á é í ó ú) are stripped, but consonant
 // diacritics (č š ž ď ť ľ ...) are phonemic and must be preserved — they are NOT stress marks.
-const STRESS_MARKS = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U' };
+// Grave-accented variants included: at least one lemma uses them (e.g. "àngle dikav").
+const STRESS_MARKS = {
+	á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', Á: 'A', É: 'E', Í: 'I', Ó: 'O', Ú: 'U',
+	à: 'a', è: 'e', ì: 'i', ò: 'o', ù: 'u', À: 'A', È: 'E', Ì: 'I', Ò: 'O', Ù: 'U',
+};
 
 // Adjectives are cited with both gender endings compactly ("ačál-o/-i" = masc "ačálo" / fem
 // "ačáli"), but Base/Source-2 links always reference the plain masculine form ("ačálo") — so

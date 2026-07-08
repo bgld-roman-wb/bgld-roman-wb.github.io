@@ -13,7 +13,7 @@ export async function entryStaticPaths() {
 
 export async function letterStaticPaths() {
 	const entries = await getCollection('entries');
-	const letters = getAvailableLetters(entries.map((e) => e.data.lemma.int));
+	const letters = getAvailableLetters(entries.map((e) => e.data.lemma.deu));
 	return letters.map((letter) => ({ params: { letter }, props: { letter } }));
 }
 
@@ -26,8 +26,8 @@ export async function wordClassStaticPaths() {
 // Data helpers used by page-body components (which render per-locale but read the same data).
 export async function entriesForLetter(letter: string) {
 	const entries = await getCollection('entries');
-	const letters = getAvailableLetters(entries.map((e) => e.data.lemma.int));
-	const matching = sortByLemma(entries.map((e) => e.data).filter((d) => letterFor(d.lemma.int) === letter));
+	const letters = getAvailableLetters(entries.map((e) => e.data.lemma.deu));
+	const matching = sortByLemma(entries.map((e) => e.data).filter((d) => letterFor(d.lemma.deu) === letter));
 	return { letters, matching };
 }
 
@@ -40,7 +40,7 @@ export async function entriesForWordClass(wordClass: string) {
 
 export async function allLetters() {
 	const entries = await getCollection('entries');
-	return getAvailableLetters(entries.map((e) => e.data.lemma.int));
+	return getAvailableLetters(entries.map((e) => e.data.lemma.deu));
 }
 
 export async function entryCount() {

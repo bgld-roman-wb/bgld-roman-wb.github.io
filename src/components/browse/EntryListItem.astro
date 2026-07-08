@@ -14,6 +14,6 @@ const firstGloss = glosses.map((g) => glossFor(g, lang)).find((g): g is string =
 ---
 
 <li>
-	<a href={localizePath(`/entry/${slug}`, lang)}><strong>{lemma.int}</strong></a>
+	<a href={localizePath(`/entry/${slug}`, lang)}><strong>{lemma.deu}</strong></a>
 	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss}</span>}
 </li>

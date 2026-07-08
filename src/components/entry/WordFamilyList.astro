@@ -17,10 +17,10 @@ const showBaseBadge = base && !base.isSelf && base.slug && base.slug !== current
 <ul style="padding-inline-start: var(--space-4);">
 	{showBaseBadge && (
 		<li>
-			<a href={localizePath(`/entry/${base!.slug}`, lang)}>{base!.int}</a> <span class="badge">{t('entry.baseWord')}</span>
+			<a href={localizePath(`/entry/${base!.slug}`, lang)}>{base!.deu ?? base!.int}</a> <span class="badge">{t('entry.baseWord')}</span>
 		</li>
 	)}
 	{members.map((m) => (
-		<li><a href={localizePath(`/entry/${m.slug}`, lang)}>{m.lemma.int}</a></li>
+		<li><a href={localizePath(`/entry/${m.slug}`, lang)}>{m.lemma.deu}</a></li>
 	))}
 </ul>

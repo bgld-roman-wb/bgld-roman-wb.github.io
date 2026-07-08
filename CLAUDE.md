@@ -121,9 +121,11 @@ into two app languages, configured in `astro.config.mjs` (`defaultLocale: 'de'`,
   (`.de` vs `.en` from the pipeline), and which meaning-gloss is shown (`DEUTSCH`
   vs `ENGLISH` columns). The German and English glosses are two localizations of
   the same meaning — **never show them together**.
-- **What it does NOT switch**: the Roman headword itself. Its INT (international)
-  vs DEU (German-based) spellings are dictionary content, shown the same in both
-  locales — INT is primary, DEU noted only when it differs. (This overrides the
-  literal `INT : DEU / DEUTSCH : ENGLISH` line in the struktur PDF template
-  above, which predates this decision.)
+- **What it does NOT switch**: the Roman headword itself. Its two orthographies
+  — DEU (German-based) vs INT (international) — are dictionary content, shown
+  the same in both locales. **DEU is the primary/default spelling** (headword,
+  browse lists, sort/letter grouping, first paradigm columns); INT is secondary
+  (own line under the headword when it differs, second paradigm columns). (This
+  overrides the literal `INT : DEU / DEUTSCH : ENGLISH` line in the struktur
+  PDF template above, which predates this decision.)
 - `LanguageSwitcher.astro` links to the same page in the other locale.

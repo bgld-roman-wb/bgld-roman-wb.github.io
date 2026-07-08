@@ -53,16 +53,16 @@ function labelText(label: (string | null)[]) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">{t('table.form')}</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th></tr>
+				<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th></tr>
 			</thead>
 			<tbody>
 				{forms.map((f) => (
 					<tr>
 						<th scope="row">{labelText(f.label)}</th>
-						<td>{f.intM}</td>
-						<td>{f.intF}</td>
 						<td>{f.deuM}</td>
 						<td>{f.deuF}</td>
+						<td>{f.intM}</td>
+						<td>{f.intF}</td>
 					</tr>
 				))}
 			</tbody>
@@ -74,14 +74,14 @@ function labelText(label: (string | null)[]) {
 	<div class="table-scroll">
 		<table>
 			<thead>
-				<tr><th scope="col">{t('table.form')}</th><th scope="col">INT</th><th scope="col">DEU</th></tr>
+				<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU</th><th scope="col">INT</th></tr>
 			</thead>
 			<tbody>
 				{forms.map((f) => (
 					<tr>
 						<th scope="row">{labelText(f.label)}</th>
-						<td>{f.int}</td>
 						<td>{f.deu}</td>
+						<td>{f.int}</td>
 					</tr>
 				))}
 			</tbody>

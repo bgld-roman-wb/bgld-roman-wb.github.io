@@ -67,7 +67,13 @@ async function main() {
 
 	const entries = rows.map((row) => {
 		const displayInt = splitStem(row.lemmaInt).display;
-		const displayDeu = splitStem(row.lemmaDeu).display;
+		let displayDeu = splitStem(row.lemmaDeu).display;
+		// DEU is the site's primary displayed orthography — a missing Roman DEU cell is a data gap
+		// worth surfacing, but the entry should still render; fall back to the INT spelling.
+		if (!displayDeu) {
+			validator.warn('missing-deu-lemma', `Row ${row.rowNumber} (${displayInt}): Roman DEU is empty — falling back to INT spelling for display`, { rowNumber: row.rowNumber });
+			displayDeu = displayInt;
+		}
 		const isDerivation = ARROW_MARKERS.includes(row.source1);
 
 		let sourceLabel = null;
