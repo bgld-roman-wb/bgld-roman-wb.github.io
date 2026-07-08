@@ -38,8 +38,11 @@ function combineGenderedRows(stemInt, stemDeu, rows, mField, fField) {
 // Resolves a GLOSSARY row's Paradigm value into a fully expanded inflection table. Routing is
 // by the Paradigm key itself (see buildKeyToSheetIndex in parse-paradigms.mjs) — Word class
 // 1/2 are NOT used here, only for display labeling elsewhere.
-export function expandParadigm(row, paradigmIndex, validator) {
-	const { paradigm, lemmaInt, lemmaDeu } = row;
+export function expandParadigm(row, paradigmIndex, validator, corrections) {
+	const { lemmaInt, lemmaDeu } = row;
+	// Route the key through any proposed alias (e.g. the NME-i -> NM-E-i typo fix) before
+	// lookup. Corrections never touch the source xlsx; see data/corrections.json.
+	const paradigm = corrections.resolveParadigmKey(row.paradigm);
 
 	if (!paradigm) {
 		return { kind: 'none', key: null, sheetName: null, forms: [] };

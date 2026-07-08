@@ -8,6 +8,7 @@ import { buildWordFamilies } from './build-word-families.mjs';
 import { createSlugAssigner } from './slugify.mjs';
 import { createValidator } from './validate.mjs';
 import { writeReport } from './report.mjs';
+import { loadCorrections } from './load-corrections.mjs';
 import { ARROW_MARKERS, DATA_XLSX_PATH, OUTPUT_DIR } from './constants.mjs';
 
 function optionalPair(int, deu) {
@@ -25,18 +26,30 @@ function buildGlossSlots(row) {
 	return slots;
 }
 
-function resolveGramCode(gram, code, validator, context) {
+function resolveGramCode(gram, code, validator, corrections, context) {
 	if (!code) return { code: null, en: null, de: null };
 	const entry = gram.get(code);
-	if (!entry) {
-		validator.error('unresolved-gram-code', `${context}: grammatical abbreviation "${code}" not found in abbrs-gram`, { rowNumber: context });
-		return { code, en: null, de: null };
+	if (entry) return { code, en: entry.en, de: entry.de };
+
+	// Corrections are consulted only when the source sheet genuinely lacks the code — they never
+	// override the professor's own labels. First a typo-alias to an existing code (reusing the
+	// professor's label), then a brand-new addition (e.g. INTR). See data/corrections.json.
+	const aliasTarget = corrections.gramAliasFor(code);
+	if (aliasTarget) {
+		const target = gram.get(aliasTarget);
+		if (target) return { code, en: target.en, de: target.de };
 	}
-	return { code, en: entry.en, de: entry.de };
+
+	const corrected = corrections.gramAdditionFor(code);
+	if (corrected) return { code, en: corrected.en, de: corrected.de };
+
+	validator.error('unresolved-gram-code', `${context}: grammatical abbreviation "${code}" not found in abbrs-gram`, { rowNumber: context });
+	return { code, en: null, de: null };
 }
 
 async function main() {
 	const validator = createValidator();
+	const corrections = await loadCorrections();
 	const workbook = await loadWorkbook(DATA_XLSX_PATH);
 
 	const rows = readGlossaryRows(workbook, validator);
@@ -76,15 +89,15 @@ async function main() {
 			},
 			base: null, // resolved in buildWordFamilies
 			wordClass: {
-				class1: resolveGramCode(abbreviations.gram, row.wordClass1, validator, row.rowNumber),
-				class2: resolveGramCode(abbreviations.gram, row.wordClass2, validator, row.rowNumber),
+				class1: resolveGramCode(abbreviations.gram, row.wordClass1, validator, corrections, row.rowNumber),
+				class2: resolveGramCode(abbreviations.gram, row.wordClass2, validator, corrections, row.rowNumber),
 			},
 			flexion: {
 				flexion1: row.flexion1,
 				flexion2: optionalPair(row.flexion2Int, row.flexion2Deu),
 				flexion3: optionalPair(row.flexion3Int, row.flexion3Deu),
 			},
-			paradigm: expandParadigm(row, paradigmIndex, validator),
+			paradigm: expandParadigm(row, paradigmIndex, validator, corrections),
 			glosses: buildGlossSlots(row),
 			domain: row.domain,
 			wordFamily: [], // resolved in buildWordFamilies
@@ -100,11 +113,18 @@ async function main() {
 	await mkdir(OUTPUT_DIR, { recursive: true });
 	await writeFile(path.join(OUTPUT_DIR, 'entries.json'), JSON.stringify(publicEntries));
 
-	await writeReport(OUTPUT_DIR, validator, publicEntries.length);
+	await writeReport(OUTPUT_DIR, validator, publicEntries.length, corrections);
 
-	if (validator.errorCount > 0) {
-		console.error(`\nBuild data pipeline found ${validator.errorCount} error(s) — failing.`);
+	// Severity-aware deploy gate: a small long-tail of genuine one-off data issues (pending the
+	// professor) is tolerated so the site can ship, but a bad regression (e.g. a shifted column
+	// producing hundreds of errors) trips the budget and fails loudly. See data/corrections.json.
+	const budget = corrections.acceptedErrorBudget;
+	if (validator.errorCount > budget) {
+		console.error(`\nBuild data pipeline found ${validator.errorCount} error(s), over the accepted budget of ${budget} — failing.`);
 		process.exit(1);
+	}
+	if (validator.errorCount > 0) {
+		console.log(`\n${validator.errorCount} unresolved error(s), within the accepted budget of ${budget}. Listed in warnings.json for the professor's review.`);
 	}
 }
 

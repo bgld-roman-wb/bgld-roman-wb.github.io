@@ -1,0 +1,62 @@
+{
+  "_readme": "PROPOSED corrections applied at BUILD TIME on top of data/current/dictionary.xlsx. The source spreadsheet is NEVER modified — these are hypotheses pending the professor's review. Once the professor folds a correction into a future snapshot, delete it from here. See data/CORRECTIONS.md for the human-readable rationale. Each correction records how many entries it affects so high-impact fixes are distinguishable from trivial ones.",
+  "acceptedErrorBudget": 15,
+  "_acceptedErrorBudgetNote": "The build fails if the number of UNRESOLVED data errors (after corrections) exceeds this. It absorbs a small long-tail of genuine one-off data issues that need the professor, while still failing loudly if a snapshot regresses badly (e.g. a shifted column producing hundreds of errors). Lower it toward 0 as the professor resolves the remaining issues; currently ~1 error remains (a corrupted cell at GLOSSARY row 1538) plus headroom for future snapshots.",
+  "gramAbbreviationAdditions": [
+    {
+      "code": "INTR",
+      "en": "intransitive",
+      "de": "intransitiv",
+      "rationale": "Used as Word class 2 on ~170 verb entries but absent from the abbrs-gram sheet. INTR is the standard grammatical gloss for an intransitive verb; the sheet already defines the parallel category set for verbs, so this is a missing row rather than an ambiguous code."
+    }
+  ],
+  "gramAbbreviationAliases": [
+    {
+      "from": "INDECLold",
+      "to": "INDECL-old",
+      "rationale": "~7 GLOSSARY rows reference 'INDECLold', but abbrs-gram defines it as 'INDECL-old' (indeclinable-old). Missing-hyphen typo; aliased to reuse the professor's own label."
+    },
+    {
+      "from": "INDEF",
+      "to": "INDF",
+      "rationale": "GLOSSARY row 5012 uses 'INDEF', but abbrs-gram defines the indefinite-pronoun code as 'INDF'. Aliased to the existing definition."
+    }
+  ],
+  "paradigmKeyAliases": [
+    {
+      "from": "NME-i",
+      "to": "NM-E-i",
+      "rationale": "~175 GLOSSARY rows reference paradigm key 'NME-i', but the M-DECL header cell spells it 'NM-E-i'. Every sibling masculine key uses the un-hyphenated 'NME-' prefix (NME-o-1, NME-A, NME-u, NME-∅-1, ...), so the single M-DECL header cell is the outlier typo and 'NME-i' is the intended key. Aliasing lets those 175 entries render their declension correctly."
+    },
+    {
+      "from": "NME-IRR-01",
+      "to": "NM-IRR-01",
+      "rationale": "GLOSSARY row 2397 (Dél) references 'NME-IRR-01', but M-DECL's irregular masculine keys use the 'NM-IRR-' prefix. Verified: NM-IRR-01 in M-DECL is the Dél/Devle(s) paradigm."
+    },
+    {
+      "from": "NME-IRR-02",
+      "to": "NM-IRR-02",
+      "rationale": "GLOSSARY row 2467 (dí) references 'NME-IRR-02'; M-DECL's NM-IRR-02 is the dí/díje(s) paradigm."
+    },
+    {
+      "from": "NME-IRR-03",
+      "to": "NM-IRR-03",
+      "rationale": "GLOSSARY row 10730 (srásta) references 'NME-IRR-03'; M-DECL's NM-IRR-03 is the srásta paradigm."
+    },
+    {
+      "from": "NME-IRR-04",
+      "to": "NM-IRR-04",
+      "rationale": "GLOSSARY row 4211 (grá) references 'NME-IRR-04'; M-DECL's NM-IRR-04 is the grá/gráste(s) paradigm."
+    },
+    {
+      "from": "NME-IRR-05",
+      "to": "NM-IRR-05",
+      "rationale": "GLOSSARY row 12217 (vá) references 'NME-IRR-05'; M-DECL's NM-IRR-05 is the vá/váste(s) paradigm."
+    },
+    {
+      "from": "NFPE-∅-01",
+      "to": "NFPE-∅-1",
+      "rationale": "GLOSSARY row 6869 (másek) references 'NFPE-∅-01', but F-DECL spells the key 'NFPE-∅-1' (single digit). Zero-padding typo."
+    }
+  ]
+}

@@ -19,6 +19,17 @@ missing paradigm link, malformed composition, etc.), don't silently coerce it
 or assume the code is wrong — flag it, since it's likely a data entry issue
 worth surfacing to the professor rather than quietly working around.
 
+**Never edit `data/current/dictionary.xlsx` to fix data issues.** It is the
+professor's authoritative source. Instead, well-evidenced corrections go in
+[`data/corrections.json`](data/corrections.json), a build-time overlay applied
+on top of the parsed spreadsheet (never modifying it) — see
+[`data/CORRECTIONS.md`](data/CORRECTIONS.md) for the mechanism. Each correction
+carries a rationale and is a proposal pending the professor's review. The build
+tolerates a small `acceptedErrorBudget` of unresolved errors so the site can
+ship despite a genuine long-tail of one-off issues, but fails loudly if errors
+spike (a snapshot regression). All remaining issues are listed in the generated
+`src/data/generated/warnings.json`.
+
 ## Source data
 - `data/current/dictionary.xlsx` and `data/current/structure.pdf` — the
   **entry points**: the latest dictionary data and its authoritative
