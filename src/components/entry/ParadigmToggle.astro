@@ -1,0 +1,31 @@
+---
+import ParadigmTable from './ParadigmTable.astro';
+
+interface ParadigmForm {
+	label: (string | null)[];
+	int?: string | null;
+	deu?: string | null;
+	intM?: string | null;
+	intF?: string | null;
+	deuM?: string | null;
+	deuF?: string | null;
+	german?: string | null;
+	english?: string | null;
+}
+
+interface Props {
+	paradigm: {
+		kind: 'none' | 'exist' | 'gendered' | 'noun' | 'verb' | 'error';
+		forms: ParadigmForm[];
+	};
+}
+
+const { paradigm } = Astro.props;
+---
+
+{paradigm.kind !== 'none' && (
+	<details>
+		<summary>Inflection paradigm</summary>
+		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} />
+	</details>
+)}

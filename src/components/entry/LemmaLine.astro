@@ -1,0 +1,27 @@
+---
+interface Pair {
+	int: string | null;
+	deu: string | null;
+}
+
+interface Props {
+	lemma: { int: string; deu: string };
+	composition: Pair | null;
+	variation: Pair | null;
+	reconstruction: Pair | null;
+}
+
+const { lemma, composition, variation, reconstruction } = Astro.props;
+
+function renderPair(pair: Pair) {
+	if (pair.int && pair.deu && pair.int !== pair.deu) return `${pair.int} : ${pair.deu}`;
+	return pair.int ?? pair.deu ?? '';
+}
+
+const bracketed = [composition, variation, reconstruction].filter((p): p is Pair => p != null).map(renderPair);
+---
+
+<p style="font-size: 1.5rem; margin-block-end: var(--space-2);">
+	<strong>{renderPair(lemma)}</strong>
+	{bracketed.length > 0 && <span style="color: var(--color-muted); font-size: 0.7em;">&nbsp;[{bracketed.join('; ')}]</span>}
+</p>

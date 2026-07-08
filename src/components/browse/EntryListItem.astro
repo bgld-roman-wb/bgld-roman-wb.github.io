@@ -1,0 +1,15 @@
+---
+interface Props {
+	slug: string;
+	lemma: { int: string; deu: string };
+	glosses: { de: string | null; en: string | null }[];
+}
+
+const { slug, lemma, glosses } = Astro.props;
+const firstGloss = glosses.find((g) => g.de || g.en);
+---
+
+<li>
+	<a href={`/entry/${slug}`}><strong>{lemma.int}</strong></a>
+	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss.de ?? firstGloss.en}</span>}
+</li>

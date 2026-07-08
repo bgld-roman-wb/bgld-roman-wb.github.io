@@ -1,0 +1,21 @@
+---
+interface Props {
+	members: { slug: string; lemma: { int: string; deu: string } }[];
+	base: { int: string | null; deu: string | null; slug: string | null; isSelf: boolean } | null;
+	currentSlug: string;
+}
+
+const { members, base, currentSlug } = Astro.props;
+const showBaseBadge = base && !base.isSelf && base.slug && base.slug !== currentSlug;
+---
+
+<ul style="padding-inline-start: var(--space-4);">
+	{showBaseBadge && (
+		<li>
+			<a href={`/entry/${base!.slug}`}>{base!.int}</a> <span class="badge">base word</span>
+		</li>
+	)}
+	{members.map((m) => (
+		<li><a href={`/entry/${m.slug}`}>{m.lemma.int}</a></li>
+	))}
+</ul>

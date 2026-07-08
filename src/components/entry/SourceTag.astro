@@ -1,0 +1,38 @@
+---
+interface Pair {
+	int: string | null;
+	deu: string | null;
+}
+
+interface Props {
+	source: {
+		code: string | null;
+		isDerivation: boolean;
+		label: { en: string | null; de: string | null } | null;
+		foreignForm: Pair | null;
+		derivationSlug: string | null;
+	};
+}
+
+const { source } = Astro.props;
+---
+
+{source.code && (
+	<p style="font-size: 0.9em; color: var(--color-muted);">
+		{source.isDerivation ? (
+			<>
+				derived from{' '}
+				{source.derivationSlug ? (
+					<a href={`/entry/${source.derivationSlug}`}>base word</a>
+				) : (
+					<span>base word</span>
+				)}
+			</>
+		) : (
+			<>
+				{source.label?.en ?? source.code}
+				{source.foreignForm?.int && <> — {source.foreignForm.int}</>}
+			</>
+		)}
+	</p>
+)}

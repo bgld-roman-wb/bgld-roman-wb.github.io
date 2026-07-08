@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import WordClassNav from '../../../components/browse/WordClassNav.astro';
+import EntryListItem from '../../../components/browse/EntryListItem.astro';
+import { sortByLemma } from '../../../lib/alphabet';
+import { collectWordClasses } from '../../../lib/word-classes';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('entries');
+	const classes = collectWordClasses(entries);
+	return classes.map(({ code }) => ({
+		params: { wordClass: code },
+		props: { wordClass: code, entries },
+	}));
+}
+
+const { wordClass, entries } = Astro.props;
+const classes = collectWordClasses(entries);
+const currentLabel = classes.find((c) => c.code === wordClass)?.label ?? wordClass;
+const matching = sortByLemma(entries.map((e) => e.data).filter((d) => d.wordClass.class1.code === wordClass));
+---
+
+<BaseLayout title={`${currentLabel} entries`}>
+	<h1>Browse by word class</h1>
+	<WordClassNav classes={classes} current={wordClass} />
+	<p>{matching.length} entries</p>
+	<ul>
+		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} />)}
+	</ul>
+</BaseLayout>

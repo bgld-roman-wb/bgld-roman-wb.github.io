@@ -1,0 +1,15 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description } = Astro.props;
+---
+
+<BaseLayout title={title} description={description}>
+	<p style="margin-block-start: 0;"><a href="/browse/alphabetical/a">&larr; Browse entries</a></p>
+	<slot />
+</BaseLayout>

@@ -1,0 +1,23 @@
+.DS_Store
+.idea/
+
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# pipeline output (regenerated from data/current/dictionary.xlsx on every build)
+src/data/generated/
+
+# local, machine-specific Claude Code permissions — not shared project config
+.claude/settings.local.json

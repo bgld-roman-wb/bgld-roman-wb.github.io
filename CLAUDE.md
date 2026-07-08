@@ -1,0 +1,89 @@
+# Burgenland Roman Dictionary (bgld-roman-wb.github.io)
+
+## What this is
+An online dictionary for Burgenland Roman (the Romani dialect spoken by the
+Roma community in Burgenland, Austria), built from a spreadsheet maintained by
+a linguistics professor. This repo will host the built site via GitHub Pages
+(hence the `<org>.github.io` name). The repo is public and intentionally so —
+raw source data is committed here, not kept private.
+
+Roles: the professor owns the linguistic content and the spreadsheet/structure
+spec; the user (repo owner) is building the site and engineering the data
+pipeline.
+
+**The spreadsheet and its spec are human-made and well put together, but not
+infallible** — treat `structure.pdf` as the authoritative *intent*, not a
+guarantee that every row in `dictionary.xlsx` follows it exactly. When the
+pipeline hits a row that violates the documented structure (unexpected value,
+missing paradigm link, malformed composition, etc.), don't silently coerce it
+or assume the code is wrong — flag it, since it's likely a data entry issue
+worth surfacing to the professor rather than quietly working around.
+
+## Source data
+- `data/current/dictionary.xlsx` and `data/current/structure.pdf` — the
+  **entry points**: the latest dictionary data and its authoritative
+  column-by-column spec (written by the professor, in German). Always read
+  `structure.pdf` before changing any data pipeline code — it is the source
+  of truth, more so than the summary below.
+- `data/archive/<YYYY-MM-DD>/` — previous dated snapshots of the same two
+  files, kept for history. When the professor sends an update, move the
+  current files into a new dated archive folder before replacing
+  `data/current/` with the new ones — don't delete old snapshots.
+- `data/background/manuscript-de.pdf` / `manuscript-en.pdf` — the same
+  accompanying book manuscript in German and English: project history,
+  sociolinguistic background on the Burgenland Roma and the Roman dialect,
+  and the codification project this dictionary grows out of. Useful context,
+  not itself dictionary data.
+
+## Workbook structure (as of the 2026-06-17 snapshot, now `data/current/dictionary.xlsx`)
+18 sheets. The important ones:
+
+- **GLOSSARY** — the main entry table, ~9,900 rows. Columns (A–AP):
+  - `Roman INT`/`Roman DEU` (A/B) — the lemma in international vs. German
+    orthography. A trailing hyphen inside the lemma (e.g. `acél-o`) marks
+    where inflectional endings attach per the `Paradigm` column; it's hidden
+    in display.
+  - `Composition INT/DEU` (C/D) — if the lemma is a compound, its parts.
+  - `Variation INT/DEU` (E/F) — attested variant forms.
+  - `Reconstruction INT/DEU` (G/H) — unattested reconstructed forms (marked
+    `*`), when the lemma is the result of a phonological process.
+  - `Source-1` (I), `Source-2 INT/DEU` (J/K) — etymology: ISO-639 language
+    code and/or derivation base (`←`).
+  - `Base INT/DEU` (L/M) — the word-family root form.
+  - `Word class 1/2` (N/O) — POS and sub-class (e.g. N + M/F/MF, ADJ, V).
+  - `Flexion 1/2/3` (P/Q/R/S/T) — inflection class markers (meaning depends
+    on word class — see PDF).
+  - `Paradigm` (U, hidden) — links a row to a row in `ADJ-DECL`, `F-DECL`,
+    `M-DECL`, `MF-DECL`, `V-CONJG`, or `V-EXIST` to generate the full
+    inflection table for that entry. Paradigms marked `IRR` are irregular and
+    already contain the full stem — don't reassemble them.
+  - `Domain` (V, hidden) — internal-only tagging for topical word lists, not
+    used in the rendered dictionary.
+  - `DEUTSCH 01`–`10` (W–AF), `ENGLISH 01`–`10` (AG–AP) — up to 10 glosses
+    per lemma in German and English respectively.
+- **ADJ-DECL / F-DECL / M-DECL / MF-DECL** — declension paradigm tables for
+  adjectives and the three noun genders/classes.
+- **V-CONJG / V-EXIST** — verb conjugation paradigms; `V-EXIST` specifically
+  for the verb "to be".
+- **abbrs-gram / abbrs-lang / abbrs-lex** — abbreviation lookup tables for
+  grammar labels, language/ISO-639 codes, and lexicographic labels.
+- **structure, lists, noun, verb, pre-european, swadesh, lexiko-stat,
+  base-etym** — supporting/reference sheets (methodology notes, curated word
+  lists, Swadesh list, statistics, base etymology data). Not yet mapped in
+  detail — check the sheet itself and ask the user/professor before assuming
+  its purpose.
+
+### How one dictionary entry renders (from the struktur PDF)
+```
+lemma [composition; variation; reconstruction] WORDCLASS1. WORDCLASS2. FLEX1 [flex2; flex3]
+gloss01, …, gloss10 [SOURCE1 source2]
+underline = obligatory field
+INT : DEU / DEUTSCH : ENGLISH
+```
+Plus UI affordances: a button to expand the full inflection paradigm, and a
+button to show the word family (linked to the individual related entries).
+
+## Status
+No site code yet — this is pre-implementation. Data pipeline (xlsx → site
+data) and site tech stack are not yet decided; treat those as open planning
+questions, not settled architecture.

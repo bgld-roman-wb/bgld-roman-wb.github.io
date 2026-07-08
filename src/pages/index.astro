@@ -1,0 +1,19 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const entries = await getCollection('entries');
+---
+
+<BaseLayout title="Home">
+	<h1>Burgenland Roman Dictionary</h1>
+	<p>
+		An online dictionary for Burgenland Roman, the Romani dialect spoken by the Roma community
+		in Burgenland, Austria — {entries.length.toLocaleString('en')} entries, with full inflection
+		paradigms, word families, and etymology.
+	</p>
+	<p>
+		<a href="/browse/alphabetical/a">Browse alphabetically</a> · <a href="/browse">All browse options</a> ·
+		<a href="/about">About this project</a>
+	</p>
+</BaseLayout>

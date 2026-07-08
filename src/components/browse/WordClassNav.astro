@@ -1,0 +1,20 @@
+---
+interface Props {
+	classes: { code: string; label: string }[];
+	current?: string;
+}
+
+const { classes, current } = Astro.props;
+---
+
+<nav aria-label="Word classes" style="display: flex; flex-wrap: wrap; gap: var(--space-1); margin-block-end: var(--space-3);">
+	{classes.map((c) => (
+		<a
+			href={`/browse/word-class/${c.code}`}
+			aria-current={c.code === current ? 'page' : undefined}
+			style={`padding: var(--space-1) var(--space-2); border: 1px solid var(--color-border); border-radius: 0.25rem; text-decoration: none; ${c.code === current ? 'background: var(--color-accent); color: var(--color-accent-contrast); border-color: var(--color-accent);' : ''}`}
+		>
+			{c.label} <span class="badge">{c.code}</span>
+		</a>
+	))}
+</nav>

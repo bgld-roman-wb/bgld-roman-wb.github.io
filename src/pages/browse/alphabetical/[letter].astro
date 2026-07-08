@@ -1,0 +1,29 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import LetterNav from '../../../components/browse/LetterNav.astro';
+import EntryListItem from '../../../components/browse/EntryListItem.astro';
+import { getAvailableLetters, letterFor, sortByLemma } from '../../../lib/alphabet';
+
+export async function getStaticPaths() {
+	const entries = await getCollection('entries');
+	const letters = getAvailableLetters(entries.map((e) => e.data.lemma.int));
+	return letters.map((letter) => ({
+		params: { letter },
+		props: { letter, entries },
+	}));
+}
+
+const { letter, entries } = Astro.props;
+const letters = getAvailableLetters(entries.map((e) => e.data.lemma.int));
+const matching = sortByLemma(entries.map((e) => e.data).filter((d) => letterFor(d.lemma.int) === letter));
+---
+
+<BaseLayout title={`Entries starting with "${letter.toUpperCase()}"`}>
+	<h1>Browse alphabetically</h1>
+	<LetterNav letters={letters} current={letter} />
+	<p>{matching.length} entries</p>
+	<ul>
+		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} />)}
+	</ul>
+</BaseLayout>

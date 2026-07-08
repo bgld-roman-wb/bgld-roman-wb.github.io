@@ -1,0 +1,19 @@
+---
+interface Props {
+	glosses: { de: string | null; en: string | null }[];
+}
+
+const { glosses } = Astro.props;
+---
+
+{glosses.length > 0 && (
+	<ol style="padding-inline-start: var(--space-4);">
+		{glosses.map((gloss) => (
+			<li>
+				{gloss.de && <span>{gloss.de}</span>}
+				{gloss.de && gloss.en && <span style="color: var(--color-muted);"> : </span>}
+				{gloss.en && <span>{gloss.en}</span>}
+			</li>
+		))}
+	</ol>
+)}

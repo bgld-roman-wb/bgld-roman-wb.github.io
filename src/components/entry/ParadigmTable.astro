@@ -1,0 +1,86 @@
+---
+interface ParadigmForm {
+	label: (string | null)[];
+	int?: string | null;
+	deu?: string | null;
+	intM?: string | null;
+	intF?: string | null;
+	deuM?: string | null;
+	deuF?: string | null;
+	german?: string | null;
+	english?: string | null;
+}
+
+interface Props {
+	kind: 'none' | 'exist' | 'gendered' | 'noun' | 'verb' | 'error';
+	forms: ParadigmForm[];
+}
+
+const { kind, forms } = Astro.props;
+
+function labelText(label: (string | null)[]) {
+	return label.filter(Boolean).join(' ');
+}
+---
+
+{kind === 'error' && <p class="data-unavailable">Inflection data unavailable for this entry.</p>}
+
+{kind === 'exist' && (
+	<div class="table-scroll">
+		<table>
+			<thead>
+				<tr><th scope="col">Form</th><th scope="col">Roman</th><th scope="col">German</th><th scope="col">English</th></tr>
+			</thead>
+			<tbody>
+				{forms.map((f) => (
+					<tr>
+						<th scope="row">{labelText(f.label)}</th>
+						<td>{f.int}</td>
+						<td>{f.german}</td>
+						<td>{f.english}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+)}
+
+{kind === 'gendered' && (
+	<div class="table-scroll">
+		<table>
+			<thead>
+				<tr><th scope="col">Form</th><th scope="col">INT (m.)</th><th scope="col">INT (f.)</th><th scope="col">DEU (m.)</th><th scope="col">DEU (f.)</th></tr>
+			</thead>
+			<tbody>
+				{forms.map((f) => (
+					<tr>
+						<th scope="row">{labelText(f.label)}</th>
+						<td>{f.intM}</td>
+						<td>{f.intF}</td>
+						<td>{f.deuM}</td>
+						<td>{f.deuF}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+)}
+
+{(kind === 'noun' || kind === 'verb') && (
+	<div class="table-scroll">
+		<table>
+			<thead>
+				<tr><th scope="col">Form</th><th scope="col">INT</th><th scope="col">DEU</th></tr>
+			</thead>
+			<tbody>
+				{forms.map((f) => (
+					<tr>
+						<th scope="row">{labelText(f.label)}</th>
+						<td>{f.int}</td>
+						<td>{f.deu}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+)}

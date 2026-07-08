@@ -1,0 +1,42 @@
+---
+interface GramLabel {
+	code: string | null;
+	en: string | null;
+	de: string | null;
+}
+interface Pair {
+	int: string | null;
+	deu: string | null;
+}
+
+interface Props {
+	class1: GramLabel;
+	class2: GramLabel;
+	flexion1: string | null;
+	flexion2: Pair | null;
+	flexion3: Pair | null;
+}
+
+const { class1, class2, flexion1, flexion2, flexion3 } = Astro.props;
+
+function labelText(g: GramLabel) {
+	return g.en ?? g.code ?? '';
+}
+
+const flexParts = [flexion2, flexion3]
+	.filter((p): p is Pair => p != null)
+	.map((p) => (p.int && p.deu && p.int !== p.deu ? `${p.int} : ${p.deu}` : (p.int ?? p.deu ?? '')));
+---
+
+<p style="color: var(--color-muted);">
+	{class1.code && (
+		<span title={class1.code}>{labelText(class1)}.</span>
+	)}
+	{' '}
+	{class2.code && (
+		<span title={class2.code}>{labelText(class2)}.</span>
+	)}
+	{' '}
+	{flexion1 && <span>{flexion1}</span>}
+	{flexParts.length > 0 && <span>&nbsp;[{flexParts.join('; ')}]</span>}
+</p>

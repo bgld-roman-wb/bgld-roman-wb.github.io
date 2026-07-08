@@ -1,0 +1,20 @@
+---
+import WordFamilyList from './WordFamilyList.astro';
+
+interface Props {
+	wordFamily: { slug: string; lemma: { int: string; deu: string } }[];
+	base: { int: string | null; deu: string | null; slug: string | null; isSelf: boolean } | null;
+	currentSlug: string;
+}
+
+const { wordFamily, base, currentSlug } = Astro.props;
+const hasBaseLink = base && !base.isSelf && base.slug && base.slug !== currentSlug;
+const hasContent = wordFamily.length > 0 || hasBaseLink;
+---
+
+{hasContent && (
+	<details>
+		<summary>Word family</summary>
+		<WordFamilyList members={wordFamily} base={base} currentSlug={currentSlug} />
+	</details>
+)}

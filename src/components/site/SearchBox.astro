@@ -1,0 +1,17 @@
+---
+// Mounted by Pagefind's UI bundle, generated into dist/pagefind/ by the `pagefind` CLI as a
+// post-build step (see package.json's `build` script) — the script below 404s harmlessly in
+// `astro dev`/`astro preview` before a full `npm run build` has run once.
+// pagefind-ui.js is a plain global script (sets `window.PagefindUI`), not an ES module — it
+// must be loaded via a <script src> tag, not a dynamic import().
+---
+
+<div id="search"></div>
+
+<link rel="stylesheet" href="/pagefind/pagefind-ui.css" />
+<script src="/pagefind/pagefind-ui.js" is:inline></script>
+<script is:inline>
+	window.addEventListener('DOMContentLoaded', () => {
+		if (window.PagefindUI) new window.PagefindUI({ element: '#search', showSubResults: true });
+	});
+</script>
