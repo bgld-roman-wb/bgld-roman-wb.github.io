@@ -42,13 +42,14 @@ export function buildWordFamilies(entries, validator) {
 		return target ? target.slug : null;
 	}
 
-	const familyMembers = new Map(); // base entry slug -> [{slug, lemma}]
+	const familyMembers = new Map(); // base entry slug -> [{slug, lemma, glosses}]
 
 	for (const entry of entries) {
 		const isDerivation = ARROW_MARKERS.includes(entry.raw.source1);
 
 		if (entry.raw.baseInt) {
 			const targetSlug = resolveLink(entry.raw.baseInt);
+			const target = targetSlug ? byNormalizedLemma.get(normalizeForMatching(entry.raw.baseInt)) : null;
 			const isSelf = targetSlug === entry.slug;
 			if (!targetSlug) {
 				// Warning, not error: Base often documents a shared etymological root that isn't
@@ -59,10 +60,10 @@ export function buildWordFamilies(entries, validator) {
 				// fine, it just won't show a word-family link. See warnings.json for the full list.
 				validator.warn('base-link-unresolved', `Row ${entry.raw.rowNumber} (${entry.lemma.int}): Base "${entry.raw.baseInt}" does not match any GLOSSARY lemma`, { rowNumber: entry.raw.rowNumber });
 			}
-			entry.base = { int: entry.raw.baseInt, deu: entry.raw.baseDeu, slug: targetSlug, isSelf };
+			entry.base = { int: entry.raw.baseInt, deu: entry.raw.baseDeu, slug: targetSlug, isSelf, glosses: target?.glosses ?? [] };
 			if (targetSlug && !isSelf) {
 				if (!familyMembers.has(targetSlug)) familyMembers.set(targetSlug, []);
-				familyMembers.get(targetSlug).push({ slug: entry.slug, lemma: entry.lemma });
+				familyMembers.get(targetSlug).push({ slug: entry.slug, lemma: entry.lemma, glosses: entry.glosses });
 			}
 		} else {
 			entry.base = null;

@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { loadWorkbook, readGlossaryRows } from './parse-workbook.mjs';
-import { resolveAbbreviations } from './resolve-abbreviations.mjs';
+import { publicAbbreviations, resolveAbbreviations } from './resolve-abbreviations.mjs';
 import { buildParadigmIndex } from './parse-paradigms.mjs';
 import { expandParadigm, splitStem } from './expand-entry.mjs';
 import { buildWordFamilies } from './build-word-families.mjs';
@@ -27,9 +27,9 @@ function buildGlossSlots(row) {
 }
 
 function resolveGramCode(gram, code, validator, corrections, context) {
-	if (!code) return { code: null, en: null, de: null };
+	if (!code) return { code: null, en: null, de: null, deLay: null, roman: null };
 	const entry = gram.get(code);
-	if (entry) return { code, en: entry.en, de: entry.de };
+	if (entry) return { code, en: entry.en, de: entry.de, deLay: entry.deLay, roman: entry.roman };
 
 	// Corrections are consulted only when the source sheet genuinely lacks the code — they never
 	// override the professor's own labels. First a typo-alias to an existing code (reusing the
@@ -37,14 +37,14 @@ function resolveGramCode(gram, code, validator, corrections, context) {
 	const aliasTarget = corrections.gramAliasFor(code);
 	if (aliasTarget) {
 		const target = gram.get(aliasTarget);
-		if (target) return { code, en: target.en, de: target.de };
+		if (target) return { code, en: target.en, de: target.de, deLay: target.deLay, roman: target.roman };
 	}
 
 	const corrected = corrections.gramAdditionFor(code);
-	if (corrected) return { code, en: corrected.en, de: corrected.de };
+	if (corrected) return { code, en: corrected.en, de: corrected.de, deLay: null, roman: null };
 
 	validator.error('unresolved-gram-code', `${context}: grammatical abbreviation "${code}" not found in abbrs-gram`, { rowNumber: context });
-	return { code, en: null, de: null };
+	return { code, en: null, de: null, deLay: null, roman: null };
 }
 
 async function main() {
@@ -77,8 +77,8 @@ async function main() {
 		const isDerivation = ARROW_MARKERS.includes(row.source1);
 
 		let sourceLabel = null;
-		if (row.source1 && !isDerivation) {
-			const langInfo = abbreviations.lang.get(row.source1);
+			if (row.source1 && !isDerivation) {
+				const langInfo = abbreviations.lang.byCode.get(row.source1);
 			if (!langInfo) {
 				validator.error('unresolved-lang-code', `Row ${row.rowNumber} (${displayInt}): Source-1 code "${row.source1}" not found in abbrs-lang`, { rowNumber: row.rowNumber });
 			} else {
@@ -96,22 +96,23 @@ async function main() {
 			reconstruction: optionalPair(row.reconstructionInt, row.reconstructionDeu),
 			source: {
 				code: row.source1,
-				isDerivation,
-				label: sourceLabel,
-				foreignForm: !isDerivation ? optionalPair(row.source2Int, row.source2Deu) : null,
-				derivationSlug: null, // resolved in buildWordFamilies
-			},
+					isDerivation,
+					label: sourceLabel,
+					foreignForm: !isDerivation ? optionalPair(row.source2Int, row.source2Deu) : null,
+					derivationBase: isDerivation ? optionalPair(row.source2Int, row.source2Deu) : null,
+					derivationSlug: null, // resolved in buildWordFamilies
+				},
 			base: null, // resolved in buildWordFamilies
 			wordClass: {
-				class1: resolveGramCode(abbreviations.gram, row.wordClass1, validator, corrections, row.rowNumber),
-				class2: resolveGramCode(abbreviations.gram, row.wordClass2, validator, corrections, row.rowNumber),
+					class1: resolveGramCode(abbreviations.gram.byCode, row.wordClass1, validator, corrections, row.rowNumber),
+					class2: resolveGramCode(abbreviations.gram.byCode, row.wordClass2, validator, corrections, row.rowNumber),
 			},
 			flexion: {
 				flexion1: row.flexion1,
 				flexion2: optionalPair(row.flexion2Int, row.flexion2Deu),
 				flexion3: optionalPair(row.flexion3Int, row.flexion3Deu),
 			},
-			paradigm: expandParadigm(row, paradigmIndex, validator, corrections),
+				paradigm: expandParadigm(row, paradigmIndex, validator, corrections, abbreviations.gram.byCode),
 			glosses: buildGlossSlots(row),
 			domain: row.domain,
 			wordFamily: [], // resolved in buildWordFamilies
@@ -126,6 +127,7 @@ async function main() {
 
 	await mkdir(OUTPUT_DIR, { recursive: true });
 	await writeFile(path.join(OUTPUT_DIR, 'entries.json'), JSON.stringify(publicEntries));
+	await writeFile(path.join(OUTPUT_DIR, 'abbreviations.json'), JSON.stringify(publicAbbreviations(abbreviations)));
 
 	await writeReport(OUTPUT_DIR, validator, publicEntries.length, corrections);
 

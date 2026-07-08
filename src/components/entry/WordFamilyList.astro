@@ -1,10 +1,16 @@
 ---
 import type { Locale } from '../../i18n/ui';
-import { localizePath, useTranslations } from '../../i18n/ui';
+import { glossFor, localizePath, useTranslations } from '../../i18n/ui';
 
 interface Props {
-	members: { slug: string; lemma: { int: string; deu: string } }[];
-	base: { int: string | null; deu: string | null; slug: string | null; isSelf: boolean } | null;
+	members: { slug: string; lemma: { int: string; deu: string }; glosses: { de: string | null; en: string | null }[] }[];
+	base: {
+		int: string | null;
+		deu: string | null;
+		slug: string | null;
+		isSelf: boolean;
+		glosses: { de: string | null; en: string | null }[];
+	} | null;
 	currentSlug: string;
 	lang: Locale;
 }
@@ -12,15 +18,31 @@ interface Props {
 const { members, base, currentSlug, lang } = Astro.props;
 const t = useTranslations(lang);
 const showBaseBadge = base && !base.isSelf && base.slug && base.slug !== currentSlug;
+
+function firstGloss(glosses: { de: string | null; en: string | null }[]) {
+	return glosses.map((g) => glossFor(g, lang)).find((g): g is string => Boolean(g));
+}
 ---
 
 <ul style="padding-inline-start: var(--space-4);">
 	{showBaseBadge && (
 		<li>
-			<a href={localizePath(`/entry/${base!.slug}`, lang)}>{base!.deu ?? base!.int}</a> <span class="badge">{t('entry.baseWord')}</span>
+			<a href={localizePath(`/entry/${base!.slug}`, lang)}>{base!.deu ?? base!.int}</a>
+			{firstGloss(base!.glosses) && <span class="muted"> — {firstGloss(base!.glosses)}</span>}
+			{' '}
+			<span class="badge">{t('entry.baseWord')}</span>
 		</li>
 	)}
 	{members.map((m) => (
-		<li><a href={localizePath(`/entry/${m.slug}`, lang)}>{m.lemma.deu}</a></li>
+		<li>
+			<a href={localizePath(`/entry/${m.slug}`, lang)}>{m.lemma.deu}</a>
+			{firstGloss(m.glosses) && <span class="muted"> — {firstGloss(m.glosses)}</span>}
+		</li>
 	))}
 </ul>
+
+<style>
+	.muted {
+		color: var(--color-muted);
+	}
+</style>

@@ -4,6 +4,7 @@ import { useTranslations } from '../../i18n/ui';
 
 interface ParadigmForm {
 	label: (string | null)[];
+	labelDisplay?: { code: string; de: string; en: string };
 	int?: string | null;
 	deu?: string | null;
 	intM?: string | null;
@@ -26,6 +27,15 @@ const t = useTranslations(lang);
 function labelText(label: (string | null)[]) {
 	return label.filter(Boolean).join(' ');
 }
+
+function displayLabel(form: ParadigmForm) {
+	const fallback = labelText(form.label);
+	return (lang === 'de' ? form.labelDisplay?.de : form.labelDisplay?.en) || fallback;
+}
+
+function codeLabel(form: ParadigmForm) {
+	return form.labelDisplay?.code || labelText(form.label);
+}
 ---
 
 {kind === 'error' && <p class="data-unavailable">{t('entry.inflectionUnavailable')}</p>}
@@ -39,7 +49,7 @@ function labelText(label: (string | null)[]) {
 			<tbody>
 				{forms.map((f) => (
 					<tr>
-						<th scope="row">{labelText(f.label)}</th>
+						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
 						<td>{f.int}</td>
 						<td>{lang === 'de' ? f.german : f.english}</td>
 					</tr>
@@ -58,7 +68,7 @@ function labelText(label: (string | null)[]) {
 			<tbody>
 				{forms.map((f) => (
 					<tr>
-						<th scope="row">{labelText(f.label)}</th>
+						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
 						<td>{f.deuM}</td>
 						<td>{f.deuF}</td>
 						<td>{f.intM}</td>
@@ -79,7 +89,7 @@ function labelText(label: (string | null)[]) {
 			<tbody>
 				{forms.map((f) => (
 					<tr>
-						<th scope="row">{labelText(f.label)}</th>
+						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
 						<td>{f.deu}</td>
 						<td>{f.int}</td>
 					</tr>

@@ -13,6 +13,7 @@ interface Props {
 		isDerivation: boolean;
 		label: { en: string | null; de: string | null } | null;
 		foreignForm: Pair | null;
+		derivationBase: Pair | null;
 		derivationSlug: string | null;
 	};
 	lang: Locale;
@@ -20,6 +21,28 @@ interface Props {
 
 const { source, lang } = Astro.props;
 const t = useTranslations(lang);
+
+const sourceLabel = labelFor(source.label, lang) ?? source.code;
+const foreignForm = source.foreignForm?.deu ?? source.foreignForm?.int;
+const derivationBase = source.derivationBase?.deu ?? source.derivationBase?.int ?? t('entry.derivedFromBase');
+
+function germanEtymologyName(label: string) {
+	const match = label.match(/^(.*?)(\s*\(.*\))?$/);
+	const base = match?.[1]?.trim() ?? label;
+	const note = match?.[2] ?? '';
+	if (base.endsWith('sch')) return `${base}en${note}`;
+	return `${base}${note}`;
+}
+
+function etymologySentence() {
+	if (!sourceLabel) return null;
+	if (source.code === 'etym?') return sourceLabel;
+	if (lang === 'de') {
+		const form = foreignForm ? ` (${foreignForm})` : '';
+		return `${t('entry.sourceFrom')} ${germanEtymologyName(sourceLabel)}${form}`;
+	}
+	return `${t('entry.sourceFrom')} ${sourceLabel}${foreignForm ? ` ${foreignForm}` : ''}`;
+}
 ---
 
 {source.code && (
@@ -28,16 +51,13 @@ const t = useTranslations(lang);
 			<>
 				{t('entry.derivedFrom')}{' '}
 				{source.derivationSlug ? (
-					<a href={localizePath(`/entry/${source.derivationSlug}`, lang)}>{t('entry.derivedFromBase')}</a>
+					<a href={localizePath(`/entry/${source.derivationSlug}`, lang)}>{derivationBase}</a>
 				) : (
-					<span>{t('entry.derivedFromBase')}</span>
+					<span>{derivationBase}</span>
 				)}
 			</>
 		) : (
-			<>
-				{labelFor(source.label, lang) ?? source.code}
-				{(source.foreignForm?.deu ?? source.foreignForm?.int) && <> — {source.foreignForm.deu ?? source.foreignForm.int}</>}
-			</>
+			<>{etymologySentence()}</>
 		)}
 	</p>
 )}

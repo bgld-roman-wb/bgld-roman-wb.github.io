@@ -4,8 +4,14 @@ import type { Locale } from '../../i18n/ui';
 import { useTranslations } from '../../i18n/ui';
 
 interface Props {
-	wordFamily: { slug: string; lemma: { int: string; deu: string } }[];
-	base: { int: string | null; deu: string | null; slug: string | null; isSelf: boolean } | null;
+	wordFamily: { slug: string; lemma: { int: string; deu: string }; glosses: { de: string | null; en: string | null }[] }[];
+	base: {
+		int: string | null;
+		deu: string | null;
+		slug: string | null;
+		isSelf: boolean;
+		glosses: { de: string | null; en: string | null }[];
+	} | null;
 	currentSlug: string;
 	lang: Locale;
 }
