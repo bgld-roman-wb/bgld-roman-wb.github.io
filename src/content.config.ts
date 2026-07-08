@@ -53,6 +53,7 @@ const entrySchema = z.object({
 	wordClass: z.object({ class1: gramLabel, class2: gramLabel }),
 	flexion: z.object({
 		flexion1: z.string().nullable(),
+		flexion1Label: gramLabel.nullable(),
 		flexion2: pair.nullable(),
 		flexion3: pair.nullable(),
 	}),

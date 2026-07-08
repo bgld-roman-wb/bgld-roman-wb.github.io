@@ -1,11 +1,13 @@
 ---
 import type { Locale } from '../../i18n/ui';
-import { labelFor } from '../../i18n/ui';
+import { labelFor, useTranslations } from '../../i18n/ui';
 
 interface GramLabel {
 	code: string | null;
 	en: string | null;
 	de: string | null;
+	deLay: string | null;
+	roman: string | null;
 }
 interface Pair {
 	int: string | null;
@@ -15,26 +17,80 @@ interface Pair {
 interface Props {
 	class1: GramLabel;
 	class2: GramLabel;
-	flexion1: string | null;
+	flexion1Label: GramLabel | null;
 	flexion2: Pair | null;
 	flexion3: Pair | null;
 	lang: Locale;
 }
 
-const { class1, class2, flexion1, flexion2, flexion3, lang } = Astro.props;
+const { class1, class2, flexion1Label, flexion2, flexion3, lang } = Astro.props;
+const t = useTranslations(lang);
+
+// Hover tooltip for a grammatical term: the everyday German word (German UI only) plus the term
+// in Roman itself — the metadata surfaced discreetly rather than cluttering the line.
+function hint(g: GramLabel | null): string | undefined {
+	if (!g) return undefined;
+	const parts = [lang === 'de' ? g.deLay : null, g.roman].filter(Boolean);
+	return parts.length ? parts.join(' · ') : undefined;
+}
+
+// Sub-class labels carry a redundant "(ADV)"-style category suffix; drop it for a clean read.
+function cleanSub(label: string | null): string | null {
+	return label ? label.replace(/\s*\([^)]*\)\s*$/, '').trim() : label;
+}
+
+const pos = labelFor(class1, lang);
+const gender = flexion1Label ? labelFor(flexion1Label, lang) : null;
+const sub = cleanSub(labelFor(class2, lang));
 
 // Flexion markers are Roman morphemes (dictionary content) — primary orthography is DEU.
-const flexParts = [flexion2, flexion3]
+const flexEndings = [flexion2, flexion3]
 	.filter((p): p is Pair => p != null)
 	.map((p) => p.deu ?? p.int ?? '')
 	.filter(Boolean);
 ---
 
-<p style="color: var(--color-muted);" data-pagefind-weight="0.5">
-	{class1.code && <span title={class1.code}>{labelFor(class1, lang)}.</span>}
-	{' '}
-	{class2.code && <span title={class2.code}>{labelFor(class2, lang)}.</span>}
-	{' '}
-	{flexion1 && <span>{flexion1}</span>}
-	{flexParts.length > 0 && <span>&nbsp;[{flexParts.join('; ')}]</span>}
+<p class="grammar" data-pagefind-weight="0.5">
+	{pos && <span class="pos" title={hint(class1)}>{pos}</span>}
+	{gender && (
+		<>
+			<span class="sep" aria-hidden="true">·</span>
+			<span class="meta" title={hint(flexion1Label)}>{gender}</span>
+		</>
+	)}
+	{sub && (
+		<>
+			<span class="sep" aria-hidden="true">·</span>
+			<span class="meta" title={hint(class2)}>{sub}</span>
+		</>
+	)}
+	{flexEndings.length > 0 && (
+		<>
+			<span class="sep" aria-hidden="true">·</span>
+			<span class="endings" title={t('grammar.endingsHint')}>{flexEndings.join('; ')}</span>
+		</>
+	)}
 </p>
+
+<style>
+	.grammar {
+		margin: 0 0 var(--space-3);
+		color: var(--color-muted);
+		font-size: 0.95rem;
+	}
+	.pos {
+		font-style: italic;
+	}
+	.sep {
+		margin: 0 0.45em;
+		opacity: 0.55;
+	}
+	.pos[title],
+	.meta[title] {
+		cursor: help;
+	}
+	.endings {
+		cursor: help;
+		border-bottom: 1px dotted currentColor;
+	}
+</style>

@@ -47,6 +47,18 @@ function resolveGramCode(gram, code, validator, corrections, context) {
 	return { code, en: null, de: null, deLay: null, roman: null };
 }
 
+// Flexion 1 is the nominal gender/number marker (e.g. "M", "F", "M/F", "PL"). Resolve each token
+// through abbrs-gram so the site can spell it out ("maskulin", "maskulin/feminin") and show the
+// everyday + Roman terms on hover, mirroring how word classes are resolved. Unlike a word class,
+// an unresolved token here is not an error (it's a class marker, not a POS) — fall back to raw.
+function resolveFlexion1(gram, code) {
+	if (!code) return null;
+	const tokens = code.split('/').map((tok) => tok.trim()).filter(Boolean);
+	if (tokens.length === 0) return null;
+	const perRegister = (key) => tokens.map((tok) => gram.get(tok)?.[key] || tok).join('/');
+	return { code, en: perRegister('en'), de: perRegister('de'), deLay: perRegister('deLay'), roman: perRegister('roman') };
+}
+
 async function main() {
 	const validator = createValidator();
 	const corrections = await loadCorrections();
@@ -109,6 +121,7 @@ async function main() {
 			},
 			flexion: {
 				flexion1: row.flexion1,
+				flexion1Label: resolveFlexion1(abbreviations.gram.byCode, row.flexion1),
 				flexion2: optionalPair(row.flexion2Int, row.flexion2Deu),
 				flexion3: optionalPair(row.flexion3Int, row.flexion3Deu),
 			},
