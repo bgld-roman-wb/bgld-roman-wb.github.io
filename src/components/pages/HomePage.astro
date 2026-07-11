@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { entryCount } from '../../lib/collection';
-import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
+import LetterNav from '../browse/LetterNav.astro';
+import { allLetters, homeData } from '../../lib/collection';
+import { glossFor, localizePath, useTranslations, type Locale } from '../../i18n/ui';
 
 interface Props {
 	lang: Locale;
@@ -9,15 +10,150 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const count = await entryCount();
+const { count, familyCount, pool } = await homeData();
+const letters = await allLetters();
+
+// Word of the day: deterministic by calendar day. The build pre-renders today's pick; a small
+// inline script re-picks on the visitor's device so the word still rotates between deploys.
+const wotdPool = pool.map((d) => ({ slug: d.slug, word: d.lemma.deu, gloss: glossFor(d.glosses[0], lang) }));
+const dayNumber = Math.floor(Date.now() / 86400000);
+const wotd = wotdPool[dayNumber % wotdPool.length];
+const entryPathPrefix = localizePath('/entry/', lang);
 ---
 
-<BaseLayout title={t('site.title')} description={t('site.tagline')} lang={lang}>
-	<h1>{t('site.title')}</h1>
-	<p>{t('site.tagline')} — {count.toLocaleString(lang)} {t('home.intro.suffix')}</p>
-	<p>
-		<a href={localizePath('/browse/alphabetical/a', lang)}>{t('home.browseAlpha')}</a> ·
+<BaseLayout title={t('site.title')} description={t('site.tagline')} lang={lang} searchIndex={false}>
+	<section class="hero">
+		<svg class="wheel" viewBox="0 0 64 64" aria-hidden="true">
+			<circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3" />
+			<circle cx="32" cy="32" r="5" fill="currentColor" />
+			{Array.from({ length: 16 }, (_, i) => {
+				const a = (i * Math.PI) / 8;
+				return <line x1={32 + 5 * Math.cos(a)} y1={32 + 5 * Math.sin(a)} x2={32 + 26 * Math.cos(a)} y2={32 + 26 * Math.sin(a)} stroke="currentColor" stroke-width="2.5" />;
+			})}
+		</svg>
+		<h1 class="hero-headword">
+			<a href={localizePath('/entry/roman', lang)}>Román</a>
+		</h1>
+		<p class="hero-grammar">{t('home.langLine')}</p>
+		<p class="hero-stats">
+			{count.toLocaleString(lang)} {t('home.entriesLabel')} <span class="sep" aria-hidden="true">·</span> {familyCount.toLocaleString(lang)} {t('home.familiesLabel')}
+		</p>
+	</section>
+
+	<section class="wotd" id="wotd">
+		<p class="wotd-label">{t('home.wordOfDay')}</p>
+		<p class="wotd-body">
+			<a id="wotd-word" class="wotd-word" href={`${entryPathPrefix}${wotd.slug}`}>{wotd.word}</a>
+			<span id="wotd-gloss" class="wotd-gloss">— {wotd.gloss}</span>
+		</p>
+	</section>
+
+	<section class="letters">
+		<LetterNav letters={letters} lang={lang} />
+	</section>
+
+	<p class="quick-links">
 		<a href={localizePath('/browse', lang)}>{t('home.browseAll')}</a> ·
 		<a href={localizePath('/about', lang)}>{t('home.about')}</a>
 	</p>
 </BaseLayout>
+
+<script is:inline define:vars={{ wotdPool, entryPathPrefix }}>
+	// Re-pick the word of the day on the visitor's clock (build-time pick goes stale between deploys).
+	const dayNumber = Math.floor(Date.now() / 86400000);
+	const pick = wotdPool[dayNumber % wotdPool.length];
+	const word = document.getElementById('wotd-word');
+	const gloss = document.getElementById('wotd-gloss');
+	if (pick && word && word.textContent !== pick.word) {
+		word.textContent = pick.word;
+		word.setAttribute('href', entryPathPrefix + pick.slug);
+		gloss.textContent = '— ' + pick.gloss;
+	}
+</script>
+
+<style>
+	.hero {
+		text-align: center;
+		padding-block: var(--space-5) var(--space-4);
+	}
+	.wheel {
+		inline-size: 2.5rem;
+		block-size: 2.5rem;
+		color: var(--color-accent);
+		opacity: 0.85;
+		margin-block-end: var(--space-2);
+	}
+	.hero-headword {
+		font-size: clamp(2.6rem, 8vw, 4rem);
+		line-height: 1.1;
+		margin: 0;
+		letter-spacing: -0.01em;
+	}
+	.hero-headword a {
+		color: inherit;
+		text-decoration: none;
+	}
+	.hero-headword a:hover {
+		color: var(--color-accent);
+	}
+	.hero-grammar {
+		font-style: italic;
+		color: var(--color-muted);
+		margin: var(--space-1) 0 0;
+		font-size: 1.05rem;
+	}
+	.hero-stats {
+		color: var(--color-muted);
+		font-size: 0.9rem;
+		margin: var(--space-3) 0 0;
+	}
+	.sep {
+		margin: 0 0.4em;
+		opacity: 0.55;
+	}
+	.wotd {
+		max-width: 26rem;
+		margin: var(--space-4) auto;
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--color-border);
+		border-radius: 0.75rem;
+		background: var(--color-surface);
+		text-align: center;
+	}
+	.wotd-label {
+		margin: 0 0 var(--space-1);
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--color-muted);
+	}
+	.wotd-body {
+		margin: 0;
+		font-size: 1.25rem;
+	}
+	.wotd-word {
+		font-weight: 700;
+		text-decoration: none;
+	}
+	.wotd-word:hover {
+		text-decoration: underline;
+	}
+	.wotd-gloss {
+		color: var(--color-muted);
+		margin-inline-start: 0.35em;
+	}
+	.letters {
+		display: flex;
+		justify-content: center;
+		margin-block-start: var(--space-4);
+	}
+	.letters :global(nav) {
+		justify-content: center;
+	}
+	.quick-links {
+		text-align: center;
+		color: var(--color-muted);
+		margin-block-start: var(--space-3);
+	}
+</style>

@@ -67,7 +67,7 @@ const flexEndings = [flexion2, flexion3]
 	{flexEndings.length > 0 && (
 		<>
 			<span class="sep" aria-hidden="true">·</span>
-			<span class="endings" title={t('grammar.endingsHint')}>{flexEndings.join('; ')}</span>
+			<span class="endings hint-trigger" tabindex="0" data-hint={t('grammar.endingsHint')} aria-label={t('grammar.endingsHint')}>{flexEndings.join('; ')}</span>
 		</>
 	)}
 </p>
@@ -90,7 +90,6 @@ const flexEndings = [flexion2, flexion3]
 		cursor: help;
 	}
 	.endings {
-		cursor: help;
 		border-bottom: 1px dotted currentColor;
 	}
 </style>

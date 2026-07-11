@@ -47,3 +47,29 @@ export async function entryCount() {
 	const entries = await getCollection('entries');
 	return entries.length;
 }
+
+// Data for the landing page: counts plus a curated word-of-the-day pool. The pool favours
+// core vocabulary (a word that is its own word-family base), single words with both glosses and
+// a real paradigm, sampled evenly across the alphabet so consecutive days don't cluster.
+export async function homeData() {
+	const entries = await getCollection('entries');
+	const familyCount = new Set(entries.map((e) => e.data.base?.slug).filter(Boolean)).size;
+
+	const candidates = entries
+		.map((e) => e.data)
+		.filter(
+			(d) =>
+				d.base?.isSelf &&
+				!d.lemma.deu.includes(' ') &&
+				d.lemma.deu.length <= 11 &&
+				d.glosses[0]?.de &&
+				d.glosses[0]?.en &&
+				d.paradigm.kind !== 'none' &&
+				d.paradigm.kind !== 'error',
+		)
+		.sort((a, b) => a.slug.localeCompare(b.slug));
+	const step = Math.max(1, Math.floor(candidates.length / 120));
+	const pool = candidates.filter((_, i) => i % step === 0);
+
+	return { count: entries.length, familyCount, pool };
+}

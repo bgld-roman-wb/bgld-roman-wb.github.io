@@ -39,10 +39,16 @@ function pairText(pair: Pair | null) {
 	const value = pair?.deu ?? pair?.int;
 	return value ? value.replace(/\+/g, ' + ') : null;
 }
+// The source prefixes reconstructions with "<" ("derived from"); the label already says that, so
+// drop the symbol and keep only the starred form. The star itself is explained in the hint.
+function reconstructionText(pair: Pair | null) {
+	const value = pairText(pair);
+	return value ? value.replace(/^<\s*/, '') : null;
+}
 const lemmaDetails = [
-	{ label: t('entry.variation'), value: pairText(variation) },
-	{ label: t('entry.reconstruction'), value: pairText(reconstruction) },
-].filter((item): item is { label: string; value: string } => Boolean(item.value));
+	{ label: t('entry.variation'), hint: t('entry.variationHint'), value: pairText(variation) },
+	{ label: t('entry.reconstruction'), hint: t('entry.reconstructionHint'), value: reconstructionText(reconstruction) },
+].filter((item): item is { label: string; hint: string; value: string } => Boolean(item.value));
 ---
 
 <div class="lemma">
@@ -52,7 +58,7 @@ const lemmaDetails = [
 	</h1>
 	{showInt && (
 		<p class="int-spelling" data-pagefind-weight="8">
-			<span class="tag">{t('entry.intSpelling')}</span>
+			<span class="tag hint-trigger" tabindex="0" data-hint={t('entry.intSpellingHint')} aria-label={t('entry.intSpellingHint')}>{t('entry.intSpelling')}</span>
 			<span>
 				{lemma.int}
 				{compIntText && <span class="composition"> [{compIntText}]</span>}
@@ -63,7 +69,11 @@ const lemmaDetails = [
 		<dl class="lemma-details">
 			{lemmaDetails.map((item) => (
 				<div>
-					<dt>{item.label}</dt>
+					<dt>
+						{item.label}
+						{' '}
+						<span class="hint-trigger" tabindex="0" data-hint={item.hint} aria-label={item.hint}><span class="hint-icon" aria-hidden="true">i</span></span>
+					</dt>
 					<dd>{item.value}</dd>
 				</div>
 			))}
