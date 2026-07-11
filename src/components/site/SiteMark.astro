@@ -1,0 +1,23 @@
+---
+// The site icon: a rounded square with a stressed "á" — the stress-accent motif of the
+// dictionary. This inline version follows the theme via var(--color-accent); the favicon copy
+// (public/favicon.svg) is the same design with the color hardcoded (SVG favicons can't read the
+// page's CSS variables). If the accent color changes, update it in BOTH places — see the
+// "Theming" note in CLAUDE.md.
+interface Props {
+	size?: string;
+}
+const { size = '1.5rem' } = Astro.props;
+---
+
+<svg class="site-mark" viewBox="0 0 64 64" aria-hidden="true" style={`inline-size: ${size}; block-size: ${size};`}>
+	<rect width="64" height="64" rx="14" fill="var(--color-accent)" />
+	<text x="32" y="47" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="bold" fill="var(--color-accent-contrast)">á</text>
+</svg>
+
+<style>
+	.site-mark {
+		flex-shrink: 0;
+		vertical-align: -0.3em;
+	}
+</style>

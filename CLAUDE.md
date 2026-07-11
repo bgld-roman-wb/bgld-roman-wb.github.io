@@ -129,3 +129,17 @@ into two app languages, configured in `astro.config.mjs` (`defaultLocale: 'de'`,
   overrides the literal `INT : DEU / DEUTSCH : ENGLISH` line in the struktur
   PDF template above, which predates this decision.)
 - `LanguageSwitcher.astro` links to the same page in the other locale.
+
+### Site icon & theming
+- **The site icon** is the rounded square with a stressed **á** (the
+  dictionary's stress-accent motif). The user explicitly approved this design —
+  keep it. It exists in two places that must stay in sync:
+  - `public/favicon.svg` — the favicon (accent hex hardcoded; SVG favicons
+    can't read CSS variables).
+  - `src/components/site/SiteMark.astro` — inline, theme-aware copy
+    (uses `var(--color-accent)`), shown top-left in the header.
+- **Accent color**: the current violet is provisional — the user wants to be
+  able to try different accent tones easily. All theme colors live in the
+  `:root` blocks (light + dark) at the top of `src/styles/global.css`; to
+  change the accent, edit `--color-accent` (both modes), `--color-surface`
+  (a whisper of the accent), and the hardcoded hex in `public/favicon.svg`.

@@ -38,6 +38,7 @@ const entryPathPrefix = localizePath('/entry/', lang);
 		<p class="hero-stats">
 			{count.toLocaleString(lang)} {t('home.entriesLabel')} <span class="sep" aria-hidden="true">·</span> {familyCount.toLocaleString(lang)} {t('home.familiesLabel')}
 		</p>
+		<p class="hero-blurb">{t('home.blurb')}</p>
 	</section>
 
 	<section class="wotd" id="wotd">
@@ -106,6 +107,13 @@ const entryPathPrefix = localizePath('/entry/', lang);
 		color: var(--color-muted);
 		font-size: 0.9rem;
 		margin: var(--space-3) 0 0;
+	}
+	.hero-blurb {
+		max-width: 34rem;
+		margin: var(--space-3) auto 0;
+		color: var(--color-muted);
+		font-size: 0.95rem;
+		line-height: 1.6;
 	}
 	.sep {
 		margin: 0 0.4em;

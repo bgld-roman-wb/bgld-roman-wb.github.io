@@ -70,11 +70,17 @@ const lemmaDetails = [
 			{lemmaDetails.map((item) => (
 				<div>
 					<dt>
-						{item.label}
-						{' '}
-						<span class="hint-trigger" tabindex="0" data-hint={item.hint} aria-label={item.hint}><span class="hint-icon" aria-hidden="true">i</span></span>
+						<span class="detail-label hint-trigger" tabindex="0" data-hint={item.hint} aria-label={item.hint}>{item.label}</span>
 					</dt>
-					<dd>{item.value}</dd>
+					<dd>
+						{item.value.startsWith('*') ? (
+							<>
+								<span class="star">*</span>{item.value.slice(1)}
+							</>
+						) : (
+							item.value
+						)}
+					</dd>
 				</div>
 			))}
 		</dl>
@@ -128,8 +134,19 @@ const lemmaDetails = [
 	.lemma-details dt {
 		font-weight: 600;
 	}
+	/* The label itself is the hint trigger — a quiet dotted underline signals "tap/hover me",
+	   matching the inflection-endings affordance, without adding a separate icon. */
+	.detail-label {
+		border-bottom: 1px dotted currentColor;
+	}
 	.lemma-details dd {
 		margin: 0;
+	}
+	/* The reconstruction star (the linguists' "not in use" marker) gets a whisper of the accent
+	   color so it reads as a deliberate symbol, not a typo. */
+	.star {
+		color: var(--color-accent);
+		font-weight: 700;
 	}
 	@media (max-width: 36rem) {
 		.lemma-details div {
