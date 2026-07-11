@@ -131,13 +131,14 @@ into two app languages, configured in `astro.config.mjs` (`defaultLocale: 'de'`,
 - `LanguageSwitcher.astro` links to the same page in the other locale.
 
 ### Site icon & theming
-- **The site icon** is the rounded square with a stressed **á** (the
-  dictionary's stress-accent motif). The user explicitly approved this design —
+- **The site icon** is the **16-spoke wheel** — the symbol of Roma culture, as
+  on the Roma flag. The user explicitly chose it (over an earlier "á" mark) —
   keep it. It exists in two places that must stay in sync:
-  - `public/favicon.svg` — the favicon (accent hex hardcoded; SVG favicons
-    can't read CSS variables).
+  - `public/favicon.svg` — the favicon (accent hex hardcoded, with a
+    dark-mode variant via media query; SVG favicons can't read CSS variables).
   - `src/components/site/SiteMark.astro` — inline, theme-aware copy
-    (uses `var(--color-accent)`), shown top-left in the header.
+    (uses `var(--color-accent)`), shown top-left in the header and in the
+    homepage hero.
 - **Accent color**: the current violet is provisional — the user wants to be
   able to try different accent tones easily. All theme colors live in the
   `:root` blocks (light + dark) at the top of `src/styles/global.css`; to

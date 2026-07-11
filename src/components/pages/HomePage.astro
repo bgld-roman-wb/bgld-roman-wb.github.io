@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LetterNav from '../browse/LetterNav.astro';
+import SiteMark from '../site/SiteMark.astro';
 import { allLetters, homeData } from '../../lib/collection';
 import { glossFor, localizePath, useTranslations, type Locale } from '../../i18n/ui';
 
@@ -23,14 +24,9 @@ const entryPathPrefix = localizePath('/entry/', lang);
 
 <BaseLayout title={t('site.title')} description={t('site.tagline')} lang={lang} searchIndex={false}>
 	<section class="hero">
-		<svg class="wheel" viewBox="0 0 64 64" aria-hidden="true">
-			<circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3" />
-			<circle cx="32" cy="32" r="5" fill="currentColor" />
-			{Array.from({ length: 16 }, (_, i) => {
-				const a = (i * Math.PI) / 8;
-				return <line x1={32 + 5 * Math.cos(a)} y1={32 + 5 * Math.sin(a)} x2={32 + 26 * Math.cos(a)} y2={32 + 26 * Math.sin(a)} stroke="currentColor" stroke-width="2.5" />;
-			})}
-		</svg>
+		<div class="hero-mark">
+			<SiteMark size="2.5rem" />
+		</div>
 		<h1 class="hero-headword">
 			<a href={localizePath('/entry/roman', lang)}>Román</a>
 		</h1>
@@ -77,10 +73,7 @@ const entryPathPrefix = localizePath('/entry/', lang);
 		text-align: center;
 		padding-block: var(--space-5) var(--space-4);
 	}
-	.wheel {
-		inline-size: 2.5rem;
-		block-size: 2.5rem;
-		color: var(--color-accent);
+	.hero-mark {
 		opacity: 0.85;
 		margin-block-end: var(--space-2);
 	}

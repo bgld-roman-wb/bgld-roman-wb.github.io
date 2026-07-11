@@ -1,9 +1,9 @@
 ---
-// The site icon: a rounded square with a stressed "á" — the stress-accent motif of the
-// dictionary. This inline version follows the theme via var(--color-accent); the favicon copy
-// (public/favicon.svg) is the same design with the color hardcoded (SVG favicons can't read the
-// page's CSS variables). If the accent color changes, update it in BOTH places — see the
-// "Theming" note in CLAUDE.md.
+// The site icon: the 16-spoke wheel, the symbol of Roma culture (as on the Roma flag).
+// This inline version follows the theme via currentColor (tinted with --color-accent below);
+// the favicon copy (public/favicon.svg) is the same design with hardcoded colors because SVG
+// favicons can't read the page's CSS variables. If the accent color changes, update it in BOTH
+// places — see the "Theming" note in CLAUDE.md.
 interface Props {
 	size?: string;
 }
@@ -11,13 +11,18 @@ const { size = '1.5rem' } = Astro.props;
 ---
 
 <svg class="site-mark" viewBox="0 0 64 64" aria-hidden="true" style={`inline-size: ${size}; block-size: ${size};`}>
-	<rect width="64" height="64" rx="14" fill="var(--color-accent)" />
-	<text x="32" y="47" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="bold" fill="var(--color-accent-contrast)">á</text>
+	<circle cx="32" cy="32" r="26" fill="none" stroke="currentColor" stroke-width="3" />
+	<circle cx="32" cy="32" r="5" fill="currentColor" />
+	{Array.from({ length: 16 }, (_, i) => {
+		const a = (i * Math.PI) / 8;
+		return <line x1={32 + 5 * Math.cos(a)} y1={32 + 5 * Math.sin(a)} x2={32 + 26 * Math.cos(a)} y2={32 + 26 * Math.sin(a)} stroke="currentColor" stroke-width="2.5" />;
+	})}
 </svg>
 
 <style>
 	.site-mark {
 		flex-shrink: 0;
+		color: var(--color-accent);
 		vertical-align: -0.3em;
 	}
 </style>

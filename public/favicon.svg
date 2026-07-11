@@ -1,4 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-	<rect width="64" height="64" rx="14" fill="#7a3b8c"/>
-	<text x="32" y="47" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="42" font-weight="bold" fill="#ffffff">á</text>
+	<style>
+		.rim, .spokes { stroke: #7a3b8c; }
+		.hub { fill: #7a3b8c; }
+		@media (prefers-color-scheme: dark) {
+			.rim, .spokes { stroke: #c996d6; }
+			.hub { fill: #c996d6; }
+		}
+	</style>
+	<circle class="rim" cx="32" cy="32" r="26" fill="none" stroke-width="4"/>
+	<g class="spokes" stroke-width="3" fill="none">
+		<line x1="6" y1="32" x2="58" y2="32"/>
+		<line x1="7.98" y1="22.05" x2="56.02" y2="41.95"/>
+		<line x1="13.62" y1="13.62" x2="50.38" y2="50.38"/>
+		<line x1="22.05" y1="7.98" x2="41.95" y2="56.02"/>
+		<line x1="32" y1="6" x2="32" y2="58"/>
+		<line x1="41.95" y1="7.98" x2="22.05" y2="56.02"/>
+		<line x1="50.38" y1="13.62" x2="13.62" y2="50.38"/>
+		<line x1="56.02" y1="22.05" x2="7.98" y2="41.95"/>
+	</g>
+	<circle class="hub" cx="32" cy="32" r="6"/>
 </svg>
