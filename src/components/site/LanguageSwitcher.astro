@@ -11,47 +11,44 @@ const t = useTranslations(lang);
 ---
 
 <nav class="language-switcher" aria-label={t('lang.switchLabel')}>
-	{locales.map((locale) => (
-		<a
-			href={pathInLocale(pathname, locale)}
-			aria-current={locale === lang ? 'page' : undefined}
-			hreflang={locale}
-			aria-label={languageNames[locale]}
-			title={languageNames[locale]}
-			class:list={['language-option', { active: locale === lang }]}
-		>
-			{locale.toUpperCase()}
-		</a>
+	{locales.map((locale, i) => (
+		<>
+			{i > 0 && <span class="sep" aria-hidden="true">/</span>}
+			<a
+				href={pathInLocale(pathname, locale)}
+				aria-current={locale === lang ? 'page' : undefined}
+				hreflang={locale}
+				aria-label={languageNames[locale]}
+				title={languageNames[locale]}
+				class:list={['language-option', { current: locale === lang }]}
+			>
+				{locale.toUpperCase()}
+			</a>
+		</>
 	))}
 </nav>
 
 <style>
 	.language-switcher {
 		display: inline-flex;
-		overflow: hidden;
-		border: 1px solid var(--color-border);
-		border-radius: 0.375rem;
-		background: var(--color-surface);
+		align-items: center;
 		font-size: 0.8125rem;
 		font-weight: 700;
 		line-height: 1;
 	}
 	.language-option {
-		min-width: 2.25rem;
-		padding: 0.45rem var(--space-2);
 		color: var(--color-muted);
-		text-align: center;
 		text-decoration: none;
 	}
-	.language-option + .language-option {
-		border-inline-start: 1px solid var(--color-border);
-	}
-	.language-option.active {
-		background: var(--color-accent);
-		color: var(--color-accent-contrast);
-	}
-	.language-option:not(.active):hover {
+	.language-option.current {
 		color: var(--color-text);
-		background: var(--color-bg);
+	}
+	.language-option:not(.current):hover {
+		color: var(--color-accent);
+	}
+	.sep {
+		margin-inline: 0.4em;
+		color: var(--color-muted);
+		opacity: 0.55;
 	}
 </style>
