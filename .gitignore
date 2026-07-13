@@ -1,6 +1,9 @@
 .DS_Store
 .idea/
 
+# Office lock files (created while data/current/*.xlsx is open in Excel)
+~$*.xlsx
+
 # build output
 dist/
 # generated types
