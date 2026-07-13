@@ -26,8 +26,10 @@ const { title, description, lang = defaultLang, searchIndex = true } = Astro.pro
 	<body>
 		<a class="skip-link" href="#main">Skip to content</a>
 		<Header lang={lang} />
-		<main id="main" class="container" style="padding-block: var(--space-4);" data-pagefind-body={searchIndex ? true : undefined}>
-			<slot />
+		<main id="main" data-pagefind-body={searchIndex ? true : undefined}>
+			<div class="container" style="padding-block: var(--space-4);">
+				<slot />
+			</div>
 		</main>
 		<Footer lang={lang} />
 		<script is:inline>

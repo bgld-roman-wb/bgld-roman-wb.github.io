@@ -18,7 +18,13 @@ export function shapeSignature(entry: Entry): string {
 	const d = entry.data;
 	const parts = [
 		`class1=${d.wordClass.class1.code ?? '∅'}`,
-		`class2=${d.wordClass.class2.code !== null}`,
+		// The exact code, not just presence — word class 2 (e.g. adverb subtype: TEMP/LOC/MOD/...)
+		// is a small fixed category, and different codes are genuinely different grammatical
+		// "mutations" the QA tool exists to surface, not interchangeable within one shape.
+		`class2=${d.wordClass.class2.code ?? '∅'}`,
+		// Same reasoning for gender (M/F/M-F/PL, etc.) — otherwise e.g. masculine and feminine nouns
+		// with identical field presence collapse into one shape and only one gender ever gets shown.
+		`gender=${d.flexion.flexion1 ?? '∅'}`,
 		`paradigm=${d.paradigm.kind}`,
 		`composition=${d.composition !== null}`,
 		`variation=${d.variation !== null}`,
@@ -42,6 +48,9 @@ export function shapeLabel(entry: Entry): string {
 
 	const class1 = d.wordClass.class1.code ?? 'no word class';
 	bits.push(d.wordClass.class2.code !== null ? `${class1}+${d.wordClass.class2.code}` : class1);
+
+	const gender = d.flexion.flexion1Label?.de ?? d.flexion.flexion1;
+	if (gender) bits.push(gender);
 
 	const paradigmNames: Record<string, string> = {
 		none: 'no paradigm',
