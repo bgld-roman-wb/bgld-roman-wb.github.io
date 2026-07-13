@@ -1,7 +1,7 @@
 ---
 import SearchBox from './SearchBox.astro';
 import LanguageSwitcher from './LanguageSwitcher.astro';
-import SiteMark from './SiteMark.astro';
+import Wordmark from './Wordmark.astro';
 import type { Locale } from '../../i18n/ui';
 import { localizePath, useTranslations } from '../../i18n/ui';
 
@@ -17,16 +17,14 @@ const t = useTranslations(lang);
 	<div class="container header-inner">
 		<div class="header-top">
 			<p class="site-title">
-				<a href={localizePath('/', lang)} style="color: inherit; text-decoration: none;">
-					<SiteMark size="1.35rem" />
-					{t('site.title')}
+				<a href={localizePath('/', lang)} aria-label={t('site.title')} style="color: inherit; text-decoration: none;">
+					<Wordmark />
 				</a>
 			</p>
 			<LanguageSwitcher lang={lang} />
 		</div>
 		<nav class="main-nav" aria-label="Main">
 			<a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a>
-			<a href={localizePath('/abbreviations', lang)}>{t('nav.abbreviations')}</a>
 			<a href={localizePath('/about', lang)}>{t('nav.about')}</a>
 		</nav>
 		<div class="search-row">

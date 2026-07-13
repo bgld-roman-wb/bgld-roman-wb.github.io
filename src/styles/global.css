@@ -46,6 +46,16 @@ body {
 	color: var(--color-text);
 	font-family: var(--font-sans);
 	line-height: 1.5;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Pins the footer to the bottom of the viewport on short pages (e.g. the Impressum page),
+   instead of it floating mid-page. main grows to fill any leftover space; the footer keeps
+   its natural height below it. */
+main {
+	flex: 1 0 auto;
 }
 
 a {

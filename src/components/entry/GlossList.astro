@@ -1,6 +1,7 @@
 ---
 import type { Locale } from '../../i18n/ui';
 import { glossFor } from '../../i18n/ui';
+import abbreviations from '../../data/generated/abbreviations.json';
 
 interface Props {
 	glosses: { de: string | null; en: string | null }[];
@@ -12,10 +13,39 @@ const { glosses, lang } = Astro.props;
 // Show only the meaning in the active app language — the two gloss languages are localizations of
 // the same meaning, not to be shown together.
 const localized = glosses.map((g) => glossFor(g, lang)).filter((g): g is string => Boolean(g));
+
+// Lexicographic abbreviations (jmd., etw., f., m., ...) appear raw inside gloss text, with no
+// other page left to decode them (the Abkürzungen page was removed as redundant) — so annotate
+// them in place with the same tap/hover hint used elsewhere, instead of a separate reference page.
+const lex = lang === 'de' ? abbreviations.lex.de : abbreviations.lex.en;
+const lexPattern = lex.length
+	? new RegExp(`\\b(${lex.map((l) => l.code.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?=[^\\p{L}]|$)`, 'gu')
+	: null;
+
+function annotate(text: string) {
+	if (!lexPattern) return [text];
+	const expansionByCode = new Map(lex.map((l) => [l.code, l.expansion]));
+	return text
+		.split(lexPattern)
+		.filter((part) => part !== '')
+		.map((part) => (expansionByCode.has(part) ? { code: part, expansion: expansionByCode.get(part)! } : part));
+}
 ---
 
 {localized.length > 0 && (
 	<ol style="padding-inline-start: var(--space-4);" data-pagefind-weight="8">
-		{localized.map((gloss) => <li>{gloss}</li>)}
+		{localized.map((gloss) => (
+			<li>
+				{annotate(gloss).map((part) =>
+					typeof part === 'string' ? (
+						part
+					) : (
+						<span class="hint-trigger" tabindex="0" data-hint={part.expansion} aria-label={part.expansion}>
+							{part.code}
+						</span>
+					),
+				)}
+			</li>
+		))}
 	</ol>
 )}

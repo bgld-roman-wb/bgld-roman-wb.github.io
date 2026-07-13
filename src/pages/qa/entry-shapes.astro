@@ -1,0 +1,93 @@
+---
+// Internal QA tool: samples one representative real entry per distinct structural "shape" (word
+// class, paradigm kind, which optional fields are present, gloss count) and renders each using the
+// exact same components as a real entry page, all on one scrollable page, so the site owner can
+// visually sanity-check every combination without scrolling through ~12,500 real entries.
+//
+// Unlisted on purpose: not linked from nav, not translated (German-only), excluded from Pagefind.
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LemmaLine from '../../components/entry/LemmaLine.astro';
+import GrammarLine from '../../components/entry/GrammarLine.astro';
+import GlossList from '../../components/entry/GlossList.astro';
+import SourceTag from '../../components/entry/SourceTag.astro';
+import ParadigmToggle from '../../components/entry/ParadigmToggle.astro';
+import WordFamilyToggle from '../../components/entry/WordFamilyToggle.astro';
+import { groupEntriesByShape } from '../../lib/entry-shapes';
+
+const entries = await getCollection('entries');
+const groups = groupEntriesByShape(entries);
+const coveredEntries = groups.reduce((sum, g) => sum + g.count, 0);
+---
+
+<BaseLayout title="QA: Entry shapes" lang="de" searchIndex={false}>
+	<h1>QA: Entry shapes</h1>
+	<p class="summary">
+		{groups.length} distinct shapes covering {coveredEntries} of {entries.length} entries.
+	</p>
+
+	{
+		groups.map((group, i) => {
+			const { data } = group.representative;
+			return (
+				<section class="shape">
+					<h2>
+						<span class="shape-index">#{i + 1}</span> {group.label}
+						<span class="shape-count">({group.count} {group.count === 1 ? 'entry' : 'entries'})</span>
+					</h2>
+					<p class="shape-slug">slug: {data.slug}</p>
+					<article>
+						<LemmaLine lemma={data.lemma} composition={data.composition} variation={data.variation} reconstruction={data.reconstruction} lang="de" />
+						<GrammarLine class1={data.wordClass.class1} class2={data.wordClass.class2} flexion1Label={data.flexion.flexion1Label} flexion2={data.flexion.flexion2} flexion3={data.flexion.flexion3} lang="de" />
+						<GlossList glosses={data.glosses} lang="de" />
+						<SourceTag source={data.source} lang="de" />
+						<ParadigmToggle paradigm={data.paradigm} lang="de" />
+						<WordFamilyToggle wordFamily={data.wordFamily} base={data.base} currentSlug={data.slug} lang="de" />
+					</article>
+				</section>
+			);
+		})
+	}
+</BaseLayout>
+
+<style>
+	.summary {
+		color: var(--color-muted);
+		margin-block-end: var(--space-4);
+	}
+	.shape {
+		border-top: 2px solid var(--color-border);
+		padding-block: var(--space-4);
+	}
+	.shape:first-of-type {
+		border-top: none;
+	}
+	.shape h2 {
+		font-size: 1rem;
+		font-weight: 600;
+		margin: 0 0 var(--space-2);
+		font-family: monospace;
+	}
+	.shape-index {
+		color: var(--color-muted);
+		margin-inline-end: 0.5em;
+	}
+	.shape-count {
+		color: var(--color-muted);
+		font-weight: 400;
+		margin-inline-start: 0.5em;
+		font-size: 0.85em;
+	}
+	.shape-slug {
+		color: var(--color-muted);
+		font-size: 0.8rem;
+		font-family: monospace;
+		margin: 0 0 var(--space-3);
+	}
+	.shape article {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 0.75rem;
+		padding: var(--space-4);
+	}
+</style>
