@@ -2,9 +2,16 @@
 // The "Roman" wordmark: the site wheel icon (see SiteMark.astro) stands in for the letter O.
 // Sized in em, so it scales with whatever font-size the caller sets (header vs. hero).
 import SiteMark from './SiteMark.astro';
+
+interface Props {
+	// Plain-text suffix appended after the wordmark (e.g. "-WB" in the header, to read
+	// "Roman-WB") — the homepage hero omits it and stays just "Roman".
+	suffix?: string;
+}
+const { suffix } = Astro.props;
 ---
 
-<span class="wordmark">R<span class="wordmark-o"><SiteMark size="0.58em" /></span>man</span>
+<span class="wordmark">R<span class="wordmark-o"><SiteMark size="0.62em" /></span>man{suffix}</span>
 
 <style>
 	.wordmark {
@@ -14,7 +21,9 @@ import SiteMark from './SiteMark.astro';
 		vertical-align: -0.01em;
 		/* The SVG's own viewBox leaves a ring of empty space around the circle (needed so it reads
 		   as a self-contained icon elsewhere) — pull neighboring letters in to cancel that out here,
-		   where it's standing in for a letter, not sitting next to text as a separate icon. */
-		margin-inline: -0.05em;
+		   where it's standing in for a letter, not sitting next to text as a separate icon. The two
+		   sides are tuned independently, not symmetric. */
+		margin-inline-start: -0.05em;
+		margin-inline-end: -0.02em;
 	}
 </style>
