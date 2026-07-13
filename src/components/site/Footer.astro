@@ -15,11 +15,10 @@ const volksgruppenLink = 'https://www.bundeskanzleramt.gv.at/themen/volksgruppen
 const bkaLogo = lang === 'de' ? '/bka-logo-de.svg' : '/bka-logo-en.svg';
 ---
 
-<footer class="site-footer">
+<footer class="site-footer" data-pagefind-ignore>
 	<div class="container footer-inner">
 		<div class="footer-links">
-			<a href={volksgruppenLink} target="_blank" rel="noopener" class="bka-logo-link">
-				<img src={bkaLogo} alt={t('footer.minorityPromotion')} class="bka-logo" />
+			<a href={volksgruppenLink} target="_blank" rel="noopener" class="bka-logo-link" role="img" aria-label={t('footer.minorityPromotion')} style={`background-image: url(${bkaLogo});`}>
 			</a>
 			<a href={localizePath('/impressum', lang)}>{t('footer.imprint')}</a>
 		</div>
@@ -53,12 +52,11 @@ const bkaLogo = lang === 'de' ? '/bka-logo-de.svg' : '/bka-logo-en.svg';
 		color: var(--color-text);
 	}
 	.bka-logo-link {
-		display: inline-flex;
-		align-items: center;
-		line-height: 0;
-	}
-	.bka-logo {
-		height: 2rem;
-		width: auto;
+		display: inline-block;
+		inline-size: 8rem;
+		block-size: 2rem;
+		background-repeat: no-repeat;
+		background-position: left center;
+		background-size: contain;
 	}
 </style>
