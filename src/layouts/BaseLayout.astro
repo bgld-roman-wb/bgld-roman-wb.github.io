@@ -30,5 +30,21 @@ const { title, description, lang = defaultLang, searchIndex = true } = Astro.pro
 			<slot />
 		</main>
 		<Footer lang={lang} />
+		<script is:inline>
+			// Hint bubbles open on focus (tap, on touch screens). On iOS, tapping elsewhere doesn't
+			// reliably blur a focused non-input element, so the bubble could get stuck open — close it
+			// on any tap outside, and let a second tap on the trigger itself toggle it off.
+			document.addEventListener('pointerdown', (e) => {
+				const active = document.activeElement;
+				if (!(active instanceof HTMLElement) || !active.classList.contains('hint-trigger')) return;
+				const tapped = e.target instanceof Element ? e.target.closest('.hint-trigger') : null;
+				if (tapped === active) {
+					e.preventDefault(); // a second tap would just refocus — toggle off instead
+					active.blur();
+				} else if (!tapped) {
+					active.blur();
+				}
+			});
+		</script>
 	</body>
 </html>

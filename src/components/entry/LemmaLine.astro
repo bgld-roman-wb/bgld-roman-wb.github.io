@@ -70,7 +70,7 @@ const lemmaDetails = [
 			{lemmaDetails.map((item) => (
 				<div>
 					<dt>
-						<span class="detail-label hint-trigger" tabindex="0" data-hint={item.hint} aria-label={item.hint}>{item.label}</span>
+						<span class="detail-label hint-trigger" tabindex="0" data-hint={item.hint} aria-label={item.hint}>{item.label}</span>:
 					</dt>
 					<dd>
 						{item.value.startsWith('*') ? (
@@ -126,10 +126,12 @@ const lemmaDetails = [
 		color: var(--color-muted);
 		font-size: 0.95rem;
 	}
+	/* Label and value share one line ("ursprüngliche Form: *atschávav"), wrapping only when a
+	   long variant list needs it — also on mobile. */
 	.lemma-details div {
-		display: grid;
-		grid-template-columns: max-content minmax(0, 1fr);
-		gap: var(--space-2);
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: var(--space-2);
 	}
 	.lemma-details dt {
 		font-weight: 600;
@@ -147,11 +149,5 @@ const lemmaDetails = [
 	.star {
 		color: var(--color-accent);
 		font-weight: 700;
-	}
-	@media (max-width: 36rem) {
-		.lemma-details div {
-			grid-template-columns: 1fr;
-			gap: 0;
-		}
 	}
 </style>
