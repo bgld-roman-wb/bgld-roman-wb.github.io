@@ -27,3 +27,6 @@ src/data/generated/
 
 # scratch output (screenshots, previews) — never committed
 .tmp/
+
+# auto-mirrored copies of images shown via the Read tool
+screenshots/
