@@ -59,4 +59,10 @@ const bkaLogo = lang === 'de' ? '/bka-logo-de.svg' : '/bka-logo-en.svg';
 		background-position: left center;
 		background-size: contain;
 	}
+	/* The logo's wordmark is drawn in plain black with no dark-mode variant of its own — invert
+	   it so the text stays legible, then hue-rotate back to keep the brand's orange stripe close
+	   to its original color instead of an inverted cyan. */
+	:global([data-theme='dark']) .bka-logo-link {
+		filter: invert(1) hue-rotate(180deg);
+	}
 </style>
