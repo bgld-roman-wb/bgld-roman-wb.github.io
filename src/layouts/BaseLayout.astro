@@ -19,6 +19,15 @@ const { title, description, lang = defaultLang, searchIndex = true } = Astro.pro
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script is:inline>
+			// Runs before first paint to avoid a flash of the wrong theme. Light is the default —
+			// this only ever adds data-theme="dark", matching a stored preference from ThemeToggle.
+			try {
+				if (localStorage.getItem('theme') === 'dark') {
+					document.documentElement.dataset.theme = 'dark';
+				}
+			} catch (e) {}
+		</script>
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		{description && <meta name="description" content={description} />}
 		<title>{title} · Burgenland Roman Dictionary</title>

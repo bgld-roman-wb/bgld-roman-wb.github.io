@@ -19,16 +19,16 @@
 	--max-width: 60rem;
 }
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--color-bg: #16141a;
-		--color-text: #ececec;
-		--color-muted: #a8a3ac;
-		--color-border: #3a353f;
-		--color-accent: #c996d6;
-		--color-accent-contrast: #16141a;
-		--color-surface: #221f27;
-	}
+/* Dark mode is opt-in via the toggle (ThemeToggle.astro sets data-theme on <html>, persisted to
+   localStorage) — light is the default regardless of OS preference. */
+:root[data-theme='dark'] {
+	--color-bg: #16141a;
+	--color-text: #ececec;
+	--color-muted: #a8a3ac;
+	--color-border: #3a353f;
+	--color-accent: #c996d6;
+	--color-accent-contrast: #16141a;
+	--color-surface: #221f27;
 }
 
 * {

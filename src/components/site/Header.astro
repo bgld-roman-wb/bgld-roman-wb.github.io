@@ -1,6 +1,7 @@
 ---
 import SearchBox from './SearchBox.astro';
 import LanguageSwitcher from './LanguageSwitcher.astro';
+import ThemeToggle from './ThemeToggle.astro';
 import Wordmark from './Wordmark.astro';
 import type { Locale } from '../../i18n/ui';
 import { localizePath, useTranslations } from '../../i18n/ui';
@@ -21,7 +22,10 @@ const t = useTranslations(lang);
 					<Wordmark suffix={lang === 'de' ? '-Wörterbuch' : '-Dictionary'} />
 				</a>
 			</p>
-			<LanguageSwitcher lang={lang} />
+			<div class="header-controls">
+				<LanguageSwitcher lang={lang} />
+				<ThemeToggle lang={lang} />
+			</div>
 		</div>
 		<nav class="main-nav" aria-label="Main">
 			<a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a>
@@ -50,6 +54,12 @@ const t = useTranslations(lang);
 		justify-content: space-between;
 		gap: var(--space-3);
 		min-width: 0;
+	}
+	.header-controls {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		flex-shrink: 0;
 	}
 	.site-title {
 		margin: 0;

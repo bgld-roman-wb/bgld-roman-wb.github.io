@@ -13,15 +13,13 @@ const t = useTranslations(lang);
 // Note: unlike the sibling romani-project.github.io Impressum, this project is not represented
 // by Akademie Graz on behalf of Roma Service & Romano Centro — that institutional structure is
 // specific to the sibling project and hasn't been confirmed for this one, so it's intentionally
-// omitted here. Only the two people actually involved in this site are credited below.
+// omitted here.
 ---
 
 <BaseLayout title={t('impressum.title')} lang={lang}>
 	<p class="impressum-mark"><Wordmark /></p>
 	<h1>{t('impressum.title')}</h1>
-	<p>{t('impressum.copyright')}</p>
-	<p>{t('impressum.content')}</p>
-	<p>{t('impressum.technik')}</p>
+	<p>{t('impressum.placeholder')}</p>
 </BaseLayout>
 
 <style>

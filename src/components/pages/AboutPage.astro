@@ -12,14 +12,5 @@ const t = useTranslations(lang);
 
 <BaseLayout title={t('about.title')} lang={lang}>
 	<h1>{t('about.title')}</h1>
-	<p>{t('about.body1')}</p>
-	<p>{t('about.body2')}</p>
-	<p class="orthography-note">{t('about.orthographyHint')}</p>
+	<p>{t('about.placeholder')}</p>
 </BaseLayout>
-
-<style>
-	.orthography-note {
-		color: var(--color-muted);
-		font-size: 0.95rem;
-	}
-</style>
