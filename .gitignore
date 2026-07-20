@@ -24,3 +24,6 @@ src/data/generated/
 
 # local, machine-specific Claude Code permissions — not shared project config
 .claude/settings.local.json
+
+# scratch output (screenshots, previews) — never committed
+.tmp/
