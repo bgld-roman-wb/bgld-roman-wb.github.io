@@ -61,7 +61,7 @@ const DITTO = '〃';
 				{forms.map((f) => (
 					<tr>
 						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
-						<td>{f.int}</td>
+						<td class="word">{f.int}</td>
 						<td>{lang === 'de' ? f.german : f.english}</td>
 					</tr>
 				))}
@@ -84,8 +84,8 @@ const DITTO = '〃';
 				{forms.map((f) => (
 					<tr>
 						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
-						<td>{f.deuM}</td>
-						<td>{f.deuF}</td>
+						<td class="word">{f.deuM}</td>
+						<td class="word">{f.deuF}</td>
 						{!intRedundantGen && (sameGen(f) ? (
 							<>
 								<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
@@ -93,8 +93,8 @@ const DITTO = '〃';
 							</>
 						) : (
 							<>
-								<td>{f.intM}</td>
-								<td>{f.intF}</td>
+								<td class="word">{f.intM}</td>
+								<td class="word">{f.intF}</td>
 							</>
 						))}
 					</tr>
@@ -118,11 +118,11 @@ const DITTO = '〃';
 				{forms.map((f) => (
 					<tr>
 						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
-						<td>{f.deu}</td>
+						<td class="word">{f.deu}</td>
 						{!intRedundantNV && (sameNV(f) ? (
 							<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
 						) : (
-							<td>{f.int}</td>
+							<td class="word">{f.int}</td>
 						))}
 					</tr>
 				))}
@@ -132,6 +132,12 @@ const DITTO = '〃';
 )}
 
 <style>
+	tbody th[scope='row'] {
+		font-weight: 400;
+	}
+	.word {
+		font-weight: 600;
+	}
 	.ditto {
 		color: var(--color-muted);
 		text-align: center;
