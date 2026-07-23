@@ -13,17 +13,37 @@ const STRESS_MARKS = {
 // Adjectives are cited with both gender endings compactly ("ačál-o/-i" = masc "ačálo" / fem
 // "ačáli"), but Base/Source-2 links always reference the plain masculine form ("ačálo") — so
 // matching must truncate at the first "/", not just strip hyphens. Some Base values also carry
-// a bracketed disambiguation note ("anav [1]", "bar [f.]") that isn't part of the lemma itself.
+// a bracketed disambiguation note, written inconsistently with either brackets or parens in real
+// data ("anav [1]", "bar (f.)", "adi(ves)") — strip either.
 function normalizeForMatching(text) {
 	if (!text) return '';
 	return text
-		.replace(/\s*\[[^\]]*\]\s*/g, '')
+		.replace(/\s*[[(][^\])]*[\])]\s*/g, '')
 		.split('/')[0]
 		.replace(/-/g, '')
 		.split('')
 		.map((ch) => STRESS_MARKS[ch] ?? ch)
 		.join('')
 		.toLowerCase();
+}
+
+// Base/Source-2 sometimes cite a verb in the "-el" citation form standard in Romani linguistics
+// (e.g. "duginel"), while this dictionary's own headwords are cited in "-av" (1SG present, e.g.
+// "dugínav") — confirmed from real data as a systematic convention difference, not a typo: an
+// -el -> -av swap alone resolves the large majority of otherwise-unmatched "-el" references.
+function withVerbCitationFallback(normalized) {
+	if (!normalized.endsWith('el')) return [normalized];
+	return [normalized, normalized.slice(0, -2) + 'av'];
+}
+
+// Foreign-language etyma cited via the derivation arrow (e.g. "→ Zentner", "→ Kamille (dial)")
+// are not supposed to resolve against the Romani GLOSSARY at all — they're the loan source, not
+// a cross-reference. Detected the same way the source data itself signals it: German nouns are
+// capitalized, dialect forms are tagged "(dial)", and a few etyma use non-Romani script (e.g.
+// Sanskrit ā/ḫ). Heuristic, but low-risk: at worst it just leaves a genuinely bad reference
+// unresolved-but-unwarned rather than warned, and the entry still renders either way.
+function looksForeign(raw) {
+	return /dial\.?/i.test(raw) || /^[A-ZÄÖÜ]/.test(raw) || /[āḫṛśūïĭ]/i.test(raw);
 }
 
 // Resolves Base and (when Source-1 is a derivation arrow) Source-2 links against other
@@ -36,10 +56,13 @@ export function buildWordFamilies(entries, validator) {
 		byNormalizedLemma.set(normalizeForMatching(entry.lemma.int), entry);
 	}
 
-	function resolveLink(rawInt) {
+	function resolveEntry(rawInt) {
 		if (!rawInt) return null;
-		const target = byNormalizedLemma.get(normalizeForMatching(rawInt));
-		return target ? target.slug : null;
+		for (const candidate of withVerbCitationFallback(normalizeForMatching(rawInt))) {
+			const target = byNormalizedLemma.get(candidate);
+			if (target) return target;
+		}
+		return null;
 	}
 
 	const familyMembers = new Map(); // base entry slug -> [{slug, lemma, glosses}]
@@ -48,16 +71,15 @@ export function buildWordFamilies(entries, validator) {
 		const isDerivation = ARROW_MARKERS.includes(entry.raw.source1);
 
 		if (entry.raw.baseInt) {
-			const targetSlug = resolveLink(entry.raw.baseInt);
-			const target = targetSlug ? byNormalizedLemma.get(normalizeForMatching(entry.raw.baseInt)) : null;
+			const target = resolveEntry(entry.raw.baseInt);
+			const targetSlug = target?.slug ?? null;
 			const isSelf = targetSlug === entry.slug;
-			if (!targetSlug) {
+			if (!targetSlug && !looksForeign(entry.raw.baseInt)) {
 				// Warning, not error: Base often documents a shared etymological root that isn't
-				// independently lexicalized in this dictionary (e.g. a verb cited in the "-el"
-				// convention standard in Romani linguistics, or a loanword root like "arxitekto"
-				// underlying several derived entries but not itself a headword). That's expected
-				// sparseness in a cross-reference field, not broken data — the entry still renders
-				// fine, it just won't show a word-family link. See warnings.json for the full list.
+				// independently lexicalized in this dictionary (e.g. a loanword root like
+				// "arxitekto" underlying several derived entries but not itself a headword). That's
+				// expected sparseness in a cross-reference field, not broken data — the entry still
+				// renders fine, it just won't show a word-family link. See warnings.json.
 				validator.warn('base-link-unresolved', `Row ${entry.raw.rowNumber} (${entry.lemma.int}): Base "${entry.raw.baseInt}" does not match any GLOSSARY lemma`, { rowNumber: entry.raw.rowNumber });
 			}
 			entry.base = { int: entry.raw.baseInt, deu: entry.raw.baseDeu, slug: targetSlug, isSelf, glosses: target?.glosses ?? [] };
@@ -70,11 +92,11 @@ export function buildWordFamilies(entries, validator) {
 		}
 
 		if (isDerivation && entry.raw.source2Int) {
-			const derivationSlug = resolveLink(entry.raw.source2Int);
-			if (!derivationSlug) {
+			const target = resolveEntry(entry.raw.source2Int);
+			if (!target && !looksForeign(entry.raw.source2Int)) {
 				validator.warn('derivation-link-unresolved', `Row ${entry.raw.rowNumber} (${entry.lemma.int}): Source-2 derivation "${entry.raw.source2Int}" does not match any GLOSSARY lemma`, { rowNumber: entry.raw.rowNumber });
 			}
-			entry.source.derivationSlug = derivationSlug;
+			entry.source.derivationSlug = target?.slug ?? null;
 		}
 	}
 

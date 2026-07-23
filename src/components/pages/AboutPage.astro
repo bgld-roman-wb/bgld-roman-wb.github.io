@@ -17,10 +17,6 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 	<article class="foreword">
 		<header class="foreword-header">
 			<h1>{content.heading}</h1>
-			<a class="download" href={manuscriptHref} download>
-				<span class="download-label">{t('about.download')}</span>
-				<span class="download-hint">{t('about.downloadHint')}</span>
-			</a>
 		</header>
 
 		{content.paragraphs.map((p) => (
@@ -32,8 +28,8 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 			</p>
 		))}
 
-		<details class="staff">
-			<summary>{t('about.staffToggle')}</summary>
+		<section class="staff">
+			<h2>{content.staffHeading}</h2>
 			<p class="staff-note">{content.staffNote}</p>
 			<p class="staff-list">
 				{content.staff.map((person, i) => (
@@ -49,7 +45,9 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 					{content.signatures.map((s) => <span class="signature">{s}</span>)}
 				</span>
 			</p>
-		</details>
+		</section>
+
+		<a class="download" href={manuscriptHref} download>{t('about.download')}</a>
 
 		<footer class="notes">
 			<h2>{content.notesHeading}</h2>
@@ -70,11 +68,6 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 		margin-inline: auto;
 	}
 	.foreword-header {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--space-3);
 		margin-block-end: var(--space-4);
 	}
 	.foreword-header h1 {
@@ -88,35 +81,12 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 		text-decoration: none;
 		margin-inline-start: 0.1em;
 	}
-	.download {
-		display: flex;
-		flex-direction: column;
-		gap: 0.15em;
-		text-decoration: none;
-		text-align: right;
-		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		padding: var(--space-2) var(--space-3);
-		background: var(--color-surface);
-		flex-shrink: 0;
-	}
-	.download:hover {
-		border-color: var(--color-accent);
-	}
-	.download-label {
-		font-weight: 600;
-		color: var(--color-accent);
-	}
-	.download-hint {
-		font-size: 0.8em;
-		color: var(--color-muted);
-	}
 	.staff {
-		margin-block: var(--space-4);
-		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		padding: 0 var(--space-3);
-		background: var(--color-surface);
+		margin-block: var(--space-5);
+	}
+	.staff h2 {
+		font-size: 1.1em;
+		margin-block-end: var(--space-2);
 	}
 	.staff-note {
 		font-size: 0.85em;
@@ -146,6 +116,18 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 		font-size: 1.2em;
 		font-style: normal;
 		color: var(--color-text);
+	}
+	.download {
+		display: inline-block;
+		margin-block-end: var(--space-4);
+		text-decoration: none;
+		color: var(--color-accent);
+		border: 1px solid var(--color-border);
+		border-radius: 0.4rem;
+		padding: var(--space-1) var(--space-3);
+	}
+	.download:hover {
+		border-color: var(--color-accent);
 	}
 	.notes {
 		margin-block-start: var(--space-5);
