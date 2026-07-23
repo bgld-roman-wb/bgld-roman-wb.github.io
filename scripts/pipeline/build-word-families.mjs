@@ -51,16 +51,24 @@ function looksForeign(raw) {
 // from real data they diverge for foreign-etymology entries (e.g. "áč-av": Source-1=INC,
 // Source-2=the Sanskrit-ish etymon "ākṣeti", but Base=the Romani word-family root "ačav").
 export function buildWordFamilies(entries, validator) {
-	const byNormalizedLemma = new Map(); // normalized lemma -> entry
+	// Base/Source-2 are entered as an INT/DEU pair, but the two spellings of the same reference
+	// aren't always equally clean in the source data — confirmed from real data that ~35 rows only
+	// resolve via the DEU column even though DEU is the site's primary spelling (see CLAUDE.md).
+	// Index both orthographies and try INT first (existing behavior), then DEU as a fallback.
+	const byNormalizedLemmaInt = new Map();
+	const byNormalizedLemmaDeu = new Map();
 	for (const entry of entries) {
-		byNormalizedLemma.set(normalizeForMatching(entry.lemma.int), entry);
+		byNormalizedLemmaInt.set(normalizeForMatching(entry.lemma.int), entry);
+		byNormalizedLemmaDeu.set(normalizeForMatching(entry.lemma.deu), entry);
 	}
 
-	function resolveEntry(rawInt) {
-		if (!rawInt) return null;
-		for (const candidate of withVerbCitationFallback(normalizeForMatching(rawInt))) {
-			const target = byNormalizedLemma.get(candidate);
-			if (target) return target;
+	function resolveEntry(rawInt, rawDeu) {
+		for (const [raw, byNormalizedLemma] of [[rawInt, byNormalizedLemmaInt], [rawDeu, byNormalizedLemmaDeu]]) {
+			if (!raw) continue;
+			for (const candidate of withVerbCitationFallback(normalizeForMatching(raw))) {
+				const target = byNormalizedLemma.get(candidate);
+				if (target) return target;
+			}
 		}
 		return null;
 	}
@@ -71,7 +79,7 @@ export function buildWordFamilies(entries, validator) {
 		const isDerivation = ARROW_MARKERS.includes(entry.raw.source1);
 
 		if (entry.raw.baseInt) {
-			const target = resolveEntry(entry.raw.baseInt);
+			const target = resolveEntry(entry.raw.baseInt, entry.raw.baseDeu);
 			const targetSlug = target?.slug ?? null;
 			const isSelf = targetSlug === entry.slug;
 			if (!targetSlug && !looksForeign(entry.raw.baseInt)) {
@@ -92,7 +100,7 @@ export function buildWordFamilies(entries, validator) {
 		}
 
 		if (isDerivation && entry.raw.source2Int) {
-			const target = resolveEntry(entry.raw.source2Int);
+			const target = resolveEntry(entry.raw.source2Int, entry.raw.source2Deu);
 			if (!target && !looksForeign(entry.raw.source2Int)) {
 				validator.warn('derivation-link-unresolved', `Row ${entry.raw.rowNumber} (${entry.lemma.int}): Source-2 derivation "${entry.raw.source2Int}" does not match any GLOSSARY lemma`, { rowNumber: entry.raw.rowNumber });
 			}
