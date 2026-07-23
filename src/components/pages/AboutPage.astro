@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { useTranslations, type Locale } from '../../i18n/ui';
+import { foreword } from '../../data/foreword';
 
 interface Props {
 	lang: Locale;
@@ -8,9 +9,165 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
+const content = foreword[lang];
+const manuscriptHref = `/manuscript-${lang}.pdf`;
 ---
 
 <BaseLayout title={t('about.title')} lang={lang}>
-	<h1>{t('about.title')}</h1>
-	<p>{t('about.placeholder')}</p>
+	<article class="foreword">
+		<header class="foreword-header">
+			<h1>{content.heading}</h1>
+			<a class="download" href={manuscriptHref} download>
+				<span class="download-label">{t('about.download')}</span>
+				<span class="download-hint">{t('about.downloadHint')}</span>
+			</a>
+		</header>
+
+		{content.paragraphs.map((p) => (
+			<p>
+				{p.text}
+				{p.footnoteRefs?.map((ref) => (
+					<sup><a href={`#note-${ref}`} id={`ref-${ref}`}>{ref}</a></sup>
+				))}
+			</p>
+		))}
+
+		<details class="staff">
+			<summary>{t('about.staffToggle')}</summary>
+			<p class="staff-note">{content.staffNote}</p>
+			<p class="staff-list">
+				{content.staff.map((person, i) => (
+					<>
+						{person.mentor ? <em>{person.name}</em> : person.name}
+						{i < content.staff.length - 1 ? ' — ' : ''}
+					</>
+				))}
+			</p>
+			<p class="signoff">
+				{content.dateLine}
+				<span class="signatures">
+					{content.signatures.map((s) => <span class="signature">{s}</span>)}
+				</span>
+			</p>
+		</details>
+
+		<footer class="notes">
+			<h2>{content.notesHeading}</h2>
+			<ol>
+				{content.footnotes.map((note) => (
+					<li id={`note-${note.id}`}>
+						{note.text} <a href={`#ref-${note.id}`} aria-label="↵">↵</a>
+					</li>
+				))}
+			</ol>
+		</footer>
+	</article>
 </BaseLayout>
+
+<style>
+	.foreword {
+		max-width: 42rem;
+		margin-inline: auto;
+	}
+	.foreword-header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-3);
+		margin-block-end: var(--space-4);
+	}
+	.foreword-header h1 {
+		margin: 0;
+	}
+	.foreword p {
+		line-height: 1.7;
+		margin-block: 0 var(--space-3);
+	}
+	.foreword sup a {
+		text-decoration: none;
+		margin-inline-start: 0.1em;
+	}
+	.download {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15em;
+		text-decoration: none;
+		text-align: right;
+		border: 1px solid var(--color-border);
+		border-radius: 0.5rem;
+		padding: var(--space-2) var(--space-3);
+		background: var(--color-surface);
+		flex-shrink: 0;
+	}
+	.download:hover {
+		border-color: var(--color-accent);
+	}
+	.download-label {
+		font-weight: 600;
+		color: var(--color-accent);
+	}
+	.download-hint {
+		font-size: 0.8em;
+		color: var(--color-muted);
+	}
+	.staff {
+		margin-block: var(--space-4);
+		border: 1px solid var(--color-border);
+		border-radius: 0.5rem;
+		padding: 0 var(--space-3);
+		background: var(--color-surface);
+	}
+	.staff-note {
+		font-size: 0.85em;
+		color: var(--color-muted);
+		margin-block-start: 0;
+	}
+	.staff-list {
+		line-height: 1.8;
+	}
+	.signoff {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: flex-end;
+		gap: var(--space-3);
+		color: var(--color-muted);
+		font-style: italic;
+	}
+	.signatures {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: var(--space-1);
+	}
+	.signature {
+		font-family: 'Brush Script MT', cursive;
+		font-size: 1.2em;
+		font-style: normal;
+		color: var(--color-text);
+	}
+	.notes {
+		margin-block-start: var(--space-5);
+		padding-block-start: var(--space-3);
+		border-top: 1px solid var(--color-border);
+		color: var(--color-muted);
+		font-size: 0.85em;
+	}
+	.notes h2 {
+		font-size: 0.75rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		margin-block-end: var(--space-2);
+	}
+	.notes ol {
+		padding-inline-start: 1.2em;
+	}
+	.notes li {
+		margin-block-end: var(--space-2);
+	}
+	.notes a {
+		text-decoration: none;
+	}
+</style>
