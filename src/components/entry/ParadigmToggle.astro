@@ -32,22 +32,16 @@ const t = useTranslations(lang);
 	<details data-pagefind-weight="0.4">
 		<summary data-pagefind-ignore>{t('entry.paradigm')}</summary>
 		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} lang={lang} />
+		<p class="grammar-link" data-pagefind-ignore>
+			{t('grammar.note')} <a href={localizePath('/grammar', lang)}>{t('grammar.link')}</a>
+		</p>
 	</details>
 )}
-<p class="grammar-link" data-pagefind-ignore>
-	{t('grammar.note')} <a href={localizePath('/grammar', lang)}>{t('grammar.link')}</a>
-</p>
 
 <style>
 	.grammar-link {
 		color: var(--color-muted);
 		font-size: 0.85em;
 		margin-block: var(--space-2) 0;
-	}
-	/* Hide the grammar-PDF pointer once the paradigm table itself is open — it's a "there's more
-	   detail elsewhere" hint for the collapsed state, redundant once the reader is already looking
-	   at the inflection data. */
-	details[open] + .grammar-link {
-		display: none;
 	}
 </style>
