@@ -6,13 +6,14 @@ interface Props {
 	title: string;
 	description?: string;
 	lang: Locale;
+	letter: string;
 }
 
-const { title, description, lang } = Astro.props;
+const { title, description, lang, letter } = Astro.props;
 const t = useTranslations(lang);
 ---
 
 <BaseLayout title={title} description={description} lang={lang}>
-	<p style="margin-block-start: 0;" data-pagefind-ignore><a href={localizePath('/browse/alphabetical/a', lang)}>{t('browse.backToEntries')}</a></p>
+	<p style="margin-block-start: 0;" data-pagefind-ignore><a href={localizePath(`/browse/alphabetical/${letter}`, lang)}>{t('browse.backToEntries')}</a></p>
 	<slot />
 </BaseLayout>

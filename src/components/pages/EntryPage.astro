@@ -8,6 +8,7 @@ import SourceTag from '../entry/SourceTag.astro';
 import ParadigmToggle from '../entry/ParadigmToggle.astro';
 import WordFamilyToggle from '../entry/WordFamilyToggle.astro';
 import { glossFor, type Locale } from '../../i18n/ui';
+import { letterFor } from '../../lib/alphabet';
 
 interface Props {
 	entry: CollectionEntry<'entries'>;
@@ -17,9 +18,10 @@ interface Props {
 const { entry, lang } = Astro.props;
 const { data } = entry;
 const description = data.glosses.map((g) => glossFor(g, lang)).filter(Boolean).join(', ');
+const letter = letterFor(data.lemma.deu);
 ---
 
-<EntryLayout title={data.lemma.deu} description={description} lang={lang}>
+<EntryLayout title={data.lemma.deu} description={description} lang={lang} letter={letter}>
 	<article>
 		<LemmaLine lemma={data.lemma} composition={data.composition} variation={data.variation} reconstruction={data.reconstruction} lang={lang} />
 		<GrammarLine class1={data.wordClass.class1} class2={data.wordClass.class2} flexion1Label={data.flexion.flexion1Label} flexion2={data.flexion.flexion2} flexion3={data.flexion.flexion3} lang={lang} />
