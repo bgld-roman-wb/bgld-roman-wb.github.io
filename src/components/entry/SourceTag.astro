@@ -31,7 +31,7 @@ const t = useTranslations(lang);
 // dotted-underline tap/hover pattern as GrammarLine's flexion endings — revealing the full
 // language name on demand rather than spelling it out inline.
 const etymNoSource = source.code === 'etym?' ? labelFor(source.label, lang) : null;
-const sourceCode = source.code && source.code !== 'etym?' ? `${source.code.toLowerCase()}.` : null;
+const sourceCode = source.code && source.code !== 'etym?' ? source.code.toUpperCase() : null;
 // abbrs-lang labels sometimes carry an internal scope/period note in parentheses (e.g. "Südslawisch
 // (global)", "Byzantinisch Griechisch (bis 1453)") — professor-facing classification detail, not
 // meant for this public hint. Strip it.
@@ -58,7 +58,6 @@ const derivationBase = source.derivationBase?.deu ?? source.derivationBase?.int 
 				<>{etymNoSource}</>
 			) : sourceCode ? (
 				<>
-					{t('entry.sourceFrom')}{' '}
 					<span class="hint-trigger" tabindex="0" data-hint={sourceLabelHint ?? undefined} aria-label={sourceLabelHint ?? sourceCode}>{sourceCode}</span>
 					{foreignForm && <> {foreignForm}</>}
 				</>
