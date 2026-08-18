@@ -1,7 +1,7 @@
 ---
 import ParadigmTable from './ParadigmTable.astro';
 import type { Locale } from '../../i18n/ui';
-import { useTranslations } from '../../i18n/ui';
+import { localizePath, useTranslations } from '../../i18n/ui';
 
 interface ParadigmForm {
 	label: (string | null)[];
@@ -34,3 +34,14 @@ const t = useTranslations(lang);
 		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} lang={lang} />
 	</details>
 )}
+<p class="grammar-link" data-pagefind-ignore>
+	{t('grammar.note')} <a href={localizePath('/grammar', lang)}>{t('grammar.link')}</a>
+</p>
+
+<style>
+	.grammar-link {
+		color: var(--color-muted);
+		font-size: 0.85em;
+		margin-block: var(--space-2) 0;
+	}
+</style>

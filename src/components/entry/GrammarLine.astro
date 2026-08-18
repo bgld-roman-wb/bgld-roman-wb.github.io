@@ -39,6 +39,15 @@ function cleanSub(label: string | null): string | null {
 	return label ? label.replace(/\s*\([^)]*\)\s*$/, '').trim() : label;
 }
 
+// What the two flexion-ending markers mean depends on the word class: nouns/pronouns/etc. carry an
+// oblique + plural ending, verbs a nonperfective + perfective (3rd pl.) ending, adjectives a
+// combined oblique/plural ending. Nothing else in the data currently shows these endings.
+function endingsHint(code: string | null): string {
+	if (code === 'V' || code === 'VP') return t('grammar.endingsHint.verb');
+	if (code === 'ADJ') return t('grammar.endingsHint.adj');
+	return t('grammar.endingsHint.noun');
+}
+
 const pos = labelFor(class1, lang);
 const gender = flexion1Label ? labelFor(flexion1Label, lang) : null;
 const sub = cleanSub(labelFor(class2, lang));
@@ -67,7 +76,7 @@ const flexEndings = [flexion2, flexion3]
 	{flexEndings.length > 0 && (
 		<>
 			<span class="sep" aria-hidden="true">·</span>
-			<span class="endings hint-trigger" tabindex="0" data-hint={t('grammar.endingsHint')} aria-label={t('grammar.endingsHint')}>{flexEndings.join('; ')}</span>
+			<span class="endings hint-trigger" tabindex="0" data-hint={endingsHint(class1.code)} aria-label={endingsHint(class1.code)}>{flexEndings.join('; ')}</span>
 		</>
 	)}
 </p>

@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Wordmark from '../site/Wordmark.astro';
+import { useTranslations, type Locale } from '../../i18n/ui';
+
+interface Props {
+	lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+// Placeholder until the professor delivers the grammar PDF — see entry.paradigm's grammar link.
+---
+
+<BaseLayout title={t('grammar.pageTitle')} lang={lang}>
+	<p class="grammar-mark"><Wordmark /></p>
+	<h1>{t('grammar.pageTitle')}</h1>
+	<p>{t('grammar.comingSoon')}</p>
+</BaseLayout>
+
+<style>
+	.grammar-mark {
+		font-size: 1.5rem;
+		margin-bottom: var(--space-4);
+	}
+</style>
