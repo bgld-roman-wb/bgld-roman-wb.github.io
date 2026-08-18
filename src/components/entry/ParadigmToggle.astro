@@ -33,7 +33,7 @@ const t = useTranslations(lang);
 		<summary data-pagefind-ignore>{t('entry.paradigm')}</summary>
 		<ParadigmTable kind={paradigm.kind} forms={paradigm.forms} lang={lang} />
 		<p class="grammar-link" data-pagefind-ignore>
-			{t('grammar.note')} <a href={localizePath('/grammar', lang)}>{t('grammar.link')}</a>
+			<a href={localizePath('/grammar', lang)}>{t('grammar.link')}</a>
 		</p>
 	</details>
 )}

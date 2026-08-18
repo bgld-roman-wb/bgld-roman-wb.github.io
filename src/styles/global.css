@@ -80,6 +80,9 @@ a:not(:hover) {
 	margin-inline: -0.4em;
 	padding: 0.15em 0.4em;
 }
+.recently-visited::marker {
+	color: var(--color-accent);
+}
 
 .container {
 	max-width: var(--max-width);
