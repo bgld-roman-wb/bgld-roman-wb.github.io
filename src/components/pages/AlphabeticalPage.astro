@@ -2,7 +2,9 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import LetterNav from '../browse/LetterNav.astro';
 import EntryListItem from '../browse/EntryListItem.astro';
+import WordClassFilter from '../browse/WordClassFilter.astro';
 import { entriesForLetter } from '../../lib/collection';
+import { localizedWordClasses } from '../../lib/word-classes';
 import { useTranslations, type Locale } from '../../i18n/ui';
 
 interface Props {
@@ -13,16 +15,37 @@ interface Props {
 const { letter, lang } = Astro.props;
 const t = useTranslations(lang);
 const { letters, matching } = await entriesForLetter(letter);
+
+// Word classes actually present among this letter's entries (not the site-wide set) — a
+// "second layer" filter on top of the letter, per feedback. See WordClassFilter.astro.
+const classMap = new Map<string, { en: string | null; de: string | null }>();
+for (const d of matching) {
+	const { code, en, de } = d.wordClass.class1;
+	if (code && !classMap.has(code)) classMap.set(code, { en, de });
+}
+const wordClasses = localizedWordClasses([...classMap].map(([code, label]) => ({ code, ...label })), lang);
 ---
 
 <BaseLayout title={`${t('browse.letterHeading')} — ${letter.toUpperCase()}`} lang={lang}>
 	<h1>{t('browse.letterHeading')}</h1>
-	<LetterNav letters={letters} current={letter} lang={lang} />
-	<p>{matching.length} {t('browse.entries')}</p>
-	<ul data-letter={letter}>
-		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} lang={lang} />)}
+	<div class="letter-row">
+		<LetterNav letters={letters} current={letter} lang={lang} />
+		<WordClassFilter classes={wordClasses} lang={lang} />
+	</div>
+	<p><span data-entry-count>{matching.length}</span> {t('browse.entries')}</p>
+	<ul data-letter={letter} data-entry-list>
+		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} lang={lang} wordClass={d.wordClass.class1.code} />)}
 	</ul>
 </BaseLayout>
+
+<style>
+	.letter-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+</style>
 
 <script>
 	// Progressive enhancement: remember which entry was clicked and where the list was scrolled,

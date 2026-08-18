@@ -7,13 +7,17 @@ interface Props {
 	lemma: { int: string; deu: string };
 	glosses: { de: string | null; en: string | null }[];
 	lang: Locale;
+	/** Word class 1 code (e.g. "N", "V", "ADJ") — used by WordClassFilter.astro to show/hide
+	 * this item client-side. Optional since not every list (e.g. the word-class page itself,
+	 * where it's implied by the page) needs it. */
+	wordClass?: string | null;
 }
 
-const { slug, lemma, glosses, lang } = Astro.props;
+const { slug, lemma, glosses, lang, wordClass } = Astro.props;
 const firstGloss = glosses.map((g) => glossFor(g, lang)).find((g): g is string => Boolean(g));
 ---
 
-<li data-slug={slug}>
+<li data-slug={slug} data-word-class={wordClass || undefined}>
 	<a href={localizePath(`/entry/${slug}`, lang)}><strong>{lemma.deu}</strong></a>
 	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss}</span>}
 </li>

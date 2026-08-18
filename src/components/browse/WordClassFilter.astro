@@ -1,0 +1,162 @@
+---
+// A small "second layer" of filtering on top of the alphabetical browse list: narrows the
+// already-rendered list client-side by word class, no page reload or extra fetch — the data's
+// already on the page (see EntryListItem.astro's data-word-class attribute). Native <details>,
+// matching the site's existing toggle pattern (Paradigm/word-family), so it needs no JS to be
+// present/indexable, only to filter.
+import type { Locale } from '../../i18n/ui';
+import { useTranslations } from '../../i18n/ui';
+
+interface Props {
+	classes: { code: string; label: string }[];
+	lang: Locale;
+}
+
+const { classes, lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{classes.length > 1 && (
+	<details class="word-class-filter" data-filter data-no-match={t('browse.filterNoMatch')}>
+		<summary aria-label={t('browse.filter')} title={t('browse.filter')}>
+			<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+				<path d="M4 6h16M8 12h8M11 18h2" />
+			</svg>
+		</summary>
+		<div class="filter-panel">
+			<p class="filter-heading">{t('browse.filterWordClass')}</p>
+			<ul class="filter-options">
+				{classes.map((c) => (
+					<li>
+						<label>
+							<input type="checkbox" data-filter-class={c.code} />
+							{c.label}
+						</label>
+					</li>
+				))}
+			</ul>
+			<button type="button" class="filter-clear" data-filter-clear>{t('browse.filterClear')}</button>
+		</div>
+	</details>
+)}
+
+<script>
+	// One listener setup per filter instance; each targets the nearest entry list on the page.
+	for (const root of document.querySelectorAll<HTMLDetailsElement>('[data-filter]')) {
+		const checkboxes = root.querySelectorAll<HTMLInputElement>('[data-filter-class]');
+		const clearBtn = root.querySelector<HTMLButtonElement>('[data-filter-clear]')!;
+		const list = document.querySelector<HTMLElement>('[data-entry-list]');
+		const countEl = document.querySelector<HTMLElement>('[data-entry-count]');
+		if (!list) continue;
+		const items = list.querySelectorAll<HTMLLIElement>('li[data-word-class]');
+		const noMatch = document.createElement('li');
+		noMatch.className = 'filter-no-match';
+		noMatch.textContent = root.dataset.noMatch ?? '';
+		noMatch.hidden = true;
+		list.appendChild(noMatch);
+
+		function apply() {
+			const active = [...checkboxes].filter((c) => c.checked).map((c) => c.dataset.filterClass);
+			let visible = 0;
+			for (const item of items) {
+				const show = active.length === 0 || active.includes(item.dataset.wordClass ?? '');
+				item.hidden = !show;
+				if (show) visible++;
+			}
+			if (countEl) countEl.textContent = String(visible);
+			noMatch.hidden = visible > 0;
+		}
+
+		for (const checkbox of checkboxes) checkbox.addEventListener('change', apply);
+		clearBtn.addEventListener('click', () => {
+			for (const checkbox of checkboxes) checkbox.checked = false;
+			apply();
+		});
+
+		// Close on outside click — <details> has no built-in "light dismiss".
+		document.addEventListener('click', (e) => {
+			if (root.open && !root.contains(e.target as Node)) root.open = false;
+		});
+	}
+</script>
+
+<style>
+	.word-class-filter {
+		position: relative;
+	}
+	.word-class-filter summary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		list-style: none;
+		cursor: pointer;
+		color: var(--color-muted);
+		padding: var(--space-1);
+		border: 1px solid var(--color-border);
+		border-radius: 0.35rem;
+	}
+	.word-class-filter summary::-webkit-details-marker {
+		display: none;
+	}
+	.word-class-filter[open] summary,
+	.word-class-filter summary:hover {
+		color: var(--color-accent);
+		border-color: var(--color-accent);
+	}
+	.word-class-filter .icon {
+		inline-size: 1rem;
+		block-size: 1rem;
+	}
+	.filter-panel {
+		position: absolute;
+		z-index: 20;
+		top: calc(100% + 0.4em);
+		right: 0;
+		min-width: 11rem;
+		background: var(--color-bg);
+		border: 1px solid var(--color-border);
+		border-radius: 0.5rem;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		padding: var(--space-2);
+	}
+	.filter-heading {
+		margin: 0 0 var(--space-1);
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--color-muted);
+	}
+	.filter-options {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.filter-options label {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		padding: 0.2em 0;
+		font-size: 0.9rem;
+		cursor: pointer;
+	}
+	.filter-clear {
+		margin-block-start: var(--space-2);
+		font: inherit;
+		font-size: 0.8rem;
+		background: none;
+		border: none;
+		padding: 0;
+		color: var(--color-muted);
+		text-decoration: underline;
+		text-decoration-style: dotted;
+		cursor: pointer;
+	}
+	.filter-clear:hover {
+		color: var(--color-accent);
+	}
+	:global(.filter-no-match) {
+		list-style: none;
+		color: var(--color-muted);
+	}
+</style>
