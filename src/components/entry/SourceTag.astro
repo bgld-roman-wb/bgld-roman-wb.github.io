@@ -22,26 +22,20 @@ interface Props {
 const { source, lang } = Astro.props;
 const t = useTranslations(lang);
 
-// abbrs-lang labels sometimes carry an internal scope/period note in parentheses (e.g. "Indo-Arisch
-// (global)", "Byzantinisch Griechisch (bis 1453)") — professor-facing classification detail, not
-// meant for the public etymology sentence. Strip it for display.
-const rawSourceLabel = labelFor(source.label, lang) ?? source.code;
-const sourceLabel = rawSourceLabel ? rawSourceLabel.replace(/\s*\([^)]*\)\s*$/, '').trim() : rawSourceLabel;
+// "etym?" isn't a language — it's a stand-in sentence ("keine Etymologie" / "no etymology") for
+// entries with no documented origin, so it keeps its full label rather than becoming a code.
+// Every real language gets its abbrs-lang code (e.g. "INC", "GRC") instead of the spelled-out
+// name — professor's call: the full names ("Indoarisch", "Südslawisch", …) read as prose when
+// what's wanted here is a terse etymological-dictionary-style abbreviation.
+const etymNoSource = source.code === 'etym?' ? labelFor(source.label, lang) : null;
+const sourceCode = source.code && source.code !== 'etym?' ? `${source.code.toLowerCase()}.` : null;
 const foreignForm = source.foreignForm?.deu ?? source.foreignForm?.int;
 const derivationBase = source.derivationBase?.deu ?? source.derivationBase?.int ?? t('entry.derivedFromBase');
 
-function germanEtymologyName(label: string) {
-	return label.endsWith('sch') ? `${label}en` : label;
-}
-
 function etymologySentence() {
-	if (!sourceLabel) return null;
-	if (source.code === 'etym?') return sourceLabel;
-	if (lang === 'de') {
-		const form = foreignForm ? ` (${foreignForm})` : '';
-		return `${t('entry.sourceFrom')} ${germanEtymologyName(sourceLabel)}${form}`;
-	}
-	return `${t('entry.sourceFrom')} ${sourceLabel}${foreignForm ? ` ${foreignForm}` : ''}`;
+	if (etymNoSource) return etymNoSource;
+	if (!sourceCode) return null;
+	return `${t('entry.sourceFrom')} ${sourceCode}${foreignForm ? ` ${foreignForm}` : ''}`;
 }
 ---
 

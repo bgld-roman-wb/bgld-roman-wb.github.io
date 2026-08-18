@@ -69,7 +69,6 @@ function displayCodes(label, kind) {
 	const hasConcreteCase = codes.some((code) => CONCRETE_CASE_CODES.has(code));
 	return codes.filter((code) => {
 		if (hasConcreteCase && STRUCTURAL_CASE_CODES.has(code)) return false;
-		if ((kind === 'verb' || kind === 'exist') && code === 'NPFV') return false;
 		if (kind === 'exist' && code === 'POS') return false;
 		return true;
 	});
