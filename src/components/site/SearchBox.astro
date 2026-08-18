@@ -3,9 +3,14 @@
 // indexes whole rendered pages and can't restrict a match to one field, so it couldn't express
 // "search direction" (Roman word vs. gloss) as a real structural filter. This instead fetches a
 // slim per-entry search index (public/search-index.json, built by
-// scripts/pipeline/build-search-index.mjs) and matches client-side via src/lib/search.ts. See
-// that file's header comment for the Romlex-inspired design (direction + exact/fuzzy, diacritics
-// and case always folded away).
+// scripts/pipeline/build-search-index.mjs) and matches client-side via src/lib/search.ts.
+//
+// Direction (Roman → gloss vs. gloss → Roman) is the one thing that has to be an explicit,
+// visible choice — it changes which field is searched, so a silent wrong guess would just look
+// like "no results". It's a single label + swap button, not a toggle pair, to keep the row
+// visually light. Match mode (exact vs. fuzzy) isn't user-facing at all: runSearch() always tries
+// exact first and only falls back to fuzzy if that comes up empty, so typos are forgiven without
+// asking the user to think about "exact vs. fuzzy" up front.
 import type { Locale } from '../../i18n/ui';
 import { useTranslations } from '../../i18n/ui';
 
@@ -18,15 +23,16 @@ const t = useTranslations(lang);
 ---
 
 <div class="search" data-search data-lang={lang}>
-	<div class="search-controls">
-		<div class="toggle-group" data-toggle="direction" role="radiogroup" aria-label={t('search.direction.toGloss')}>
-			<button type="button" data-value="roman-to-gloss" aria-pressed="true">{t('search.direction.toGloss')}</button>
-			<button type="button" data-value="gloss-to-roman" aria-pressed="false">{t('search.direction.toRoman')}</button>
-		</div>
-		<div class="toggle-group" data-toggle="mode" role="radiogroup" aria-label="match mode">
-			<button type="button" data-value="exact" aria-pressed="true">{t('search.mode.exact')}</button>
-			<button type="button" data-value="fuzzy" aria-pressed="false">{t('search.mode.fuzzy')}</button>
-		</div>
+	<div class="direction-row">
+		<span class="direction-label" data-direction-label>{t('search.direction.toGloss')}</span>
+		<button type="button" class="swap-btn" data-direction-swap aria-label={t('search.direction.swap')} title={t('search.direction.swap')}>
+			<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M7 4 3.5 7.5 7 11" />
+				<path d="M3.5 7.5h17" />
+				<path d="m17 13 3.5 3.5-3.5 3.5" />
+				<path d="M20.5 16.5h-17" />
+			</svg>
+		</button>
 	</div>
 	<div class="search-input-wrap">
 		<input
@@ -45,15 +51,23 @@ const t = useTranslations(lang);
 </div>
 
 <script>
-	import { search, type Direction, type MatchMode, type SearchRecord } from '../../lib/search';
+	import { search, type Direction, type SearchRecord } from '../../lib/search';
 	import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
 
-	const STORAGE_KEY = 'search:prefs';
+	const STORAGE_KEY = 'search:direction';
 	// Single source of truth for these strings is ui.ts (via useTranslations), same as every
 	// server-rendered label — no separate copy hardcoded here to drift out of sync.
+	const DIRECTION_LABEL: Record<Direction, 'search.direction.toGloss' | 'search.direction.toRoman'> = {
+		'roman-to-gloss': 'search.direction.toGloss',
+		'gloss-to-roman': 'search.direction.toRoman',
+	};
 	const PLACEHOLDER: Record<Direction, 'search.placeholderToGloss' | 'search.placeholderToRoman'> = {
 		'roman-to-gloss': 'search.placeholderToGloss',
 		'gloss-to-roman': 'search.placeholderToRoman',
+	};
+	const OTHER_DIRECTION: Record<Direction, Direction> = {
+		'roman-to-gloss': 'gloss-to-roman',
+		'gloss-to-roman': 'roman-to-gloss',
 	};
 
 	let index: SearchRecord[] | null = null;
@@ -73,22 +87,19 @@ const t = useTranslations(lang);
 	// site whose whole purpose is this search.
 	loadIndex();
 
-	function readPrefs(): { direction: Direction; mode: MatchMode } {
+	function readDirection(): Direction {
 		try {
 			const raw = localStorage.getItem(STORAGE_KEY);
-			if (raw) {
-				const parsed = JSON.parse(raw);
-				if (parsed.direction && parsed.mode) return parsed;
-			}
+			if (raw === 'roman-to-gloss' || raw === 'gloss-to-roman') return raw;
 		} catch {
-			// Storage disabled — fall through to defaults.
+			// Storage disabled — fall through to the default.
 		}
-		return { direction: 'roman-to-gloss', mode: 'exact' };
+		return 'roman-to-gloss';
 	}
 
-	function writePrefs(prefs: { direction: Direction; mode: MatchMode }) {
+	function writeDirection(direction: Direction) {
 		try {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+			localStorage.setItem(STORAGE_KEY, direction);
 		} catch {
 			// Storage disabled — preference just won't persist across visits.
 		}
@@ -99,25 +110,18 @@ const t = useTranslations(lang);
 		const t = useTranslations(lang);
 		const input = root.querySelector<HTMLInputElement>('[data-search-input]')!;
 		const resultsEl = root.querySelector<HTMLUListElement>('[data-search-results]')!;
-		const directionGroup = root.querySelector<HTMLElement>('[data-toggle="direction"]')!;
-		const modeGroup = root.querySelector<HTMLElement>('[data-toggle="mode"]')!;
+		const directionLabel = root.querySelector<HTMLElement>('[data-direction-label]')!;
+		const swapBtn = root.querySelector<HTMLButtonElement>('[data-direction-swap]')!;
 
-		const prefs = readPrefs();
+		let direction = readDirection();
 		let activeIndex = -1;
 		let currentResults: { slug: string; headword: string; subheadword?: string; gloss?: string }[] = [];
 
-		function setToggle(group: HTMLElement, value: string) {
-			for (const btn of group.querySelectorAll<HTMLButtonElement>('button')) {
-				btn.setAttribute('aria-pressed', String(btn.dataset.value === value));
-			}
+		function applyDirectionToUI() {
+			directionLabel.textContent = t(DIRECTION_LABEL[direction]);
+			input.placeholder = t(PLACEHOLDER[direction]);
 		}
-
-		function applyPrefsToUI() {
-			setToggle(directionGroup, prefs.direction);
-			setToggle(modeGroup, prefs.mode);
-			input.placeholder = t(PLACEHOLDER[prefs.direction]);
-		}
-		applyPrefsToUI();
+		applyDirectionToUI();
 
 		function closeResults() {
 			resultsEl.hidden = true;
@@ -173,7 +177,14 @@ const t = useTranslations(lang);
 				closeResults();
 				return;
 			}
-			currentResults = search(index, query, { direction: prefs.direction, mode: prefs.mode, glossLang: lang === 'en' ? 'en' : 'de', limit: 20 });
+			const glossLang = lang === 'en' ? 'en' : 'de';
+			// Exact first, so a clean match isn't crowded out by looser fuzzy noise; fuzzy only
+			// steps in when exact finds nothing, so a typo still isn't a dead end.
+			let results = search(index, query, { direction, mode: 'exact', glossLang, limit: 20 });
+			if (results.length === 0) {
+				results = search(index, query, { direction, mode: 'fuzzy', glossLang, limit: 20 });
+			}
+			currentResults = results;
 			activeIndex = -1;
 			renderResults();
 		}
@@ -188,18 +199,13 @@ const t = useTranslations(lang);
 			if (input.value.trim()) loadIndex().then(runSearch);
 		});
 
-		for (const group of [directionGroup, modeGroup]) {
-			group.addEventListener('click', (e) => {
-				const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-value]');
-				if (!btn) return;
-				const kind = group.dataset.toggle === 'direction' ? 'direction' : 'mode';
-				(prefs as any)[kind] = btn.dataset.value;
-				writePrefs(prefs);
-				applyPrefsToUI();
-				runSearch();
-				input.focus();
-			});
-		}
+		swapBtn.addEventListener('click', () => {
+			direction = OTHER_DIRECTION[direction];
+			writeDirection(direction);
+			applyDirectionToUI();
+			runSearch();
+			input.focus();
+		});
 
 		input.addEventListener('keydown', (e) => {
 			if (resultsEl.hidden) return;
@@ -235,33 +241,33 @@ const t = useTranslations(lang);
 	.search {
 		max-width: 32rem;
 	}
-	.search-controls {
+	.direction-row {
 		display: flex;
-		flex-wrap: wrap;
+		align-items: center;
 		gap: var(--space-2);
 		margin-block-end: var(--space-2);
 	}
-	.toggle-group {
-		display: inline-flex;
-		border: 1px solid var(--color-border);
-		border-radius: 0.4rem;
-		overflow: hidden;
-	}
-	.toggle-group button {
-		font: inherit;
+	.direction-label {
 		font-size: 0.8rem;
-		border: none;
-		background: none;
 		color: var(--color-muted);
-		padding: 0.3em 0.7em;
+	}
+	.swap-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: none;
+		border: none;
+		padding: 0.15em;
 		cursor: pointer;
+		color: var(--color-muted);
+		border-radius: 0.3rem;
 	}
-	.toggle-group button + button {
-		border-inline-start: 1px solid var(--color-border);
+	.swap-btn:hover {
+		color: var(--color-accent);
 	}
-	.toggle-group button[aria-pressed='true'] {
-		background: var(--color-accent);
-		color: var(--color-accent-contrast);
+	.swap-btn .icon {
+		inline-size: 0.95rem;
+		block-size: 0.95rem;
 	}
 	.search-input-wrap {
 		position: relative;
