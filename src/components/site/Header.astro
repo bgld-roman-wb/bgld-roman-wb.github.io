@@ -27,10 +27,6 @@ const t = useTranslations(lang);
 				<ThemeToggle lang={lang} />
 			</div>
 		</div>
-		<nav class="main-nav" aria-label="Main">
-			<a href={localizePath('/browse/alphabetical/a', lang)}>{t('nav.browse')}</a>
-			<a href={localizePath('/about', lang)}>{t('nav.about')}</a>
-		</nav>
 		<div class="search-row">
 			<SearchBox lang={lang} />
 		</div>
@@ -71,25 +67,8 @@ const t = useTranslations(lang);
 		align-items: center;
 		gap: var(--space-2);
 	}
-	.main-nav {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: var(--space-2) var(--space-3);
-		align-items: center;
-		max-width: 100%;
-		min-width: 0;
-	}
 	.search-row {
 		flex-basis: 100%;
 		min-width: 0;
-	}
-	@media (max-width: 40rem) {
-		.main-nav {
-			flex-basis: 100%;
-		}
-		.main-nav {
-			margin-inline-start: 0;
-		}
 	}
 </style>

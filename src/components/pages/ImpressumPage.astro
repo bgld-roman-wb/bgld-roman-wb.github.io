@@ -19,12 +19,29 @@ const t = useTranslations(lang);
 <BaseLayout title={t('impressum.title')} lang={lang}>
 	<p class="impressum-mark"><Wordmark /></p>
 	<h1>{t('impressum.title')}</h1>
-	<p>{t('impressum.placeholder')}</p>
+	<address>
+		Verein ROMA-SERVICE<br />
+		Gartenstraße 3<br />
+		7511 Kleinbachselten<br />
+		Austria
+	</address>
+	<p>
+		ZVR: 876735702<br />
+		<a href="mailto:office@roma-service.at">office@roma-service.at</a>
+	</p>
+	<p>
+		{t('impressum.responsible')}: Dieter W. Halwachs<br />
+		{t('impressum.technical')}: Valentin Edelsbrunner
+	</p>
+	<p>{t('impressum.funded')}</p>
 </BaseLayout>
 
 <style>
 	.impressum-mark {
 		font-size: 1.5rem;
 		margin-bottom: var(--space-4);
+	}
+	address {
+		font-style: normal;
 	}
 </style>
