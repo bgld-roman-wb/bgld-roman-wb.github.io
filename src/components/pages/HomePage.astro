@@ -22,7 +22,7 @@ const wotd = wotdPool[dayNumber % wotdPool.length];
 const entryPathPrefix = localizePath('/entry/', lang);
 ---
 
-<BaseLayout title={t('site.title')} description={t('site.tagline')} lang={lang} searchIndex={false}>
+<BaseLayout title={t('site.title')} description={t('site.tagline')} lang={lang}>
 	<section class="hero">
 		<h1 class="hero-headword">
 			<a href={localizePath('/entry/roman', lang)}><Wordmark /></a>
@@ -44,10 +44,6 @@ const entryPathPrefix = localizePath('/entry/', lang);
 	<section class="letters">
 		<LetterNav letters={letters} lang={lang} />
 	</section>
-
-	<p class="quick-links">
-		<a href={localizePath('/about', lang)}>{t('home.about')}</a>
-	</p>
 </BaseLayout>
 
 <script is:inline define:vars={{ wotdPool, entryPathPrefix }}>
@@ -135,10 +131,5 @@ const entryPathPrefix = localizePath('/entry/', lang);
 	}
 	.letters :global(nav) {
 		justify-content: center;
-	}
-	.quick-links {
-		text-align: center;
-		color: var(--color-muted);
-		margin-block-start: var(--space-3);
 	}
 </style>

@@ -97,16 +97,23 @@ button to show the word family (linked to the individual related entries).
 ## Architecture
 - **Astro** static site, deployed to GitHub Pages via `.github/workflows/deploy.yml`
   (rebuilds on every push to `main`; `ci.yml` validates PRs). `npm run build` =
-  `build:data` → `astro build` → `pagefind --site dist`.
+  `build:data` → `astro build`.
 - **Data pipeline** (`scripts/pipeline/`, plain Node, run via `npm run build:data`)
   parses `data/current/dictionary.xlsx` into `src/data/generated/entries.json`
   (gitignored, regenerated each build). It expands paradigms, resolves word
   families and etymology links, and validates against a corrections overlay +
-  error budget (see the corrections note above).
-- **Search**: Pagefind, indexing built HTML post-build. It auto-detects each
-  page's `<html lang>` and builds a per-language index, so search on the German
-  site returns German pages and vice versa. Paradigm/word-family toggles are
-  native `<details>` so their content stays indexable.
+  error budget (see the corrections note above). The same run also emits
+  `public/search-index.json`, a slim per-entry projection for client-side search
+  (see `scripts/pipeline/build-search-index.mjs`).
+- **Search**: custom, client-side, purpose-built for the dictionary — not a
+  general full-text engine. `src/lib/search.ts` fetches `search-index.json` and
+  matches in the browser; `SearchBox.astro` is the UI. Modeled on
+  [Romlex](http://romani.uni-graz.at/romlex/)'s search: **direction** (Roman →
+  gloss vs. gloss → Roman) and **match mode** (exact vs. fuzzy/typo-tolerant)
+  are both explicit, user-set toggles — not silent defaults — and case/diacritics
+  are always folded away in both modes, so "Sabara" finds "Sabára". (Previously
+  Pagefind, a whole-page full-text indexer; dropped because it can't restrict a
+  match to one field, which direction-as-a-real-filter requires.)
 
 ### Localization (i18n)
 The **dictionary content is Burgenland Roman**; the **interface** is localized

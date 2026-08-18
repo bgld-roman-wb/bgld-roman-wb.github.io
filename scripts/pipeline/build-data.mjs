@@ -5,6 +5,7 @@ import { publicAbbreviations, resolveAbbreviations } from './resolve-abbreviatio
 import { buildParadigmIndex } from './parse-paradigms.mjs';
 import { expandParadigm, splitStem } from './expand-entry.mjs';
 import { buildWordFamilies } from './build-word-families.mjs';
+import { buildSearchIndex } from './build-search-index.mjs';
 import { createSlugAssigner } from './slugify.mjs';
 import { createValidator } from './validate.mjs';
 import { writeReport } from './report.mjs';
@@ -143,6 +144,11 @@ async function main() {
 	await mkdir(OUTPUT_DIR, { recursive: true });
 	await writeFile(path.join(OUTPUT_DIR, 'entries.json'), JSON.stringify(publicEntries));
 	await writeFile(path.join(OUTPUT_DIR, 'abbreviations.json'), JSON.stringify(publicAbbreviations(abbreviations)));
+
+	// Client-side search asset — see build-search-index.mjs. Written straight to public/ so Astro
+	// copies it verbatim to the site root, fetched by SearchBox.astro at runtime.
+	await mkdir('public', { recursive: true });
+	await writeFile('public/search-index.json', JSON.stringify(buildSearchIndex(publicEntries)));
 
 	await writeReport(OUTPUT_DIR, validator, publicEntries.length, corrections);
 

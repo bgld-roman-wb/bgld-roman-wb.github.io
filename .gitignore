@@ -21,6 +21,7 @@ npm-debug.log*
 
 # pipeline output (regenerated from data/current/dictionary.xlsx on every build)
 src/data/generated/
+public/search-index.json
 
 # local, machine-specific Claude Code permissions — not shared project config
 .claude/settings.local.json

@@ -20,7 +20,7 @@ const groups = groupEntriesByShape(entries);
 const coveredEntries = groups.reduce((sum, g) => sum + g.count, 0);
 ---
 
-<BaseLayout title="QA: Entry shapes" lang="de" searchIndex={false}>
+<BaseLayout title="QA: Entry shapes" lang="de">
 	<h1>QA: Entry shapes</h1>
 	<p class="summary">
 		{groups.length} distinct shapes covering {coveredEntries} of {entries.length} entries.
