@@ -71,6 +71,16 @@ a:not(:hover) {
 	outline-offset: 2px;
 }
 
+/* Marks the entry a user most recently clicked into, when they return to a browse list (see
+   AlphabeticalPage.astro's restore script). Kept as understated as the rest of the site's hints —
+   a whisper of the accent, not a badge. */
+.recently-visited {
+	background: var(--color-surface);
+	border-radius: 4px;
+	margin-inline: -0.4em;
+	padding: 0.15em 0.4em;
+}
+
 .container {
 	max-width: var(--max-width);
 	margin-inline: auto;

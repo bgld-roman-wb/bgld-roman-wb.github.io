@@ -19,7 +19,48 @@ const { letters, matching } = await entriesForLetter(letter);
 	<h1>{t('browse.letterHeading')}</h1>
 	<LetterNav letters={letters} current={letter} lang={lang} />
 	<p>{matching.length} {t('browse.entries')}</p>
-	<ul>
+	<ul data-letter={letter}>
 		{matching.map((d) => <EntryListItem slug={d.slug} lemma={d.lemma} glosses={d.glosses} lang={lang} />)}
 	</ul>
 </BaseLayout>
+
+<script>
+	// Progressive enhancement: remember which entry was clicked and where the list was scrolled,
+	// so that returning here (via the entry page's back link, or the browser back button when
+	// native scroll restoration doesn't kick in) both restores the scroll position and puts a
+	// subtle highlight on the entry last visited. Scoped to sessionStorage (per tab) and to this
+	// one list, keyed by letter — no server state, degrades to a no-op if storage is unavailable.
+	const STORAGE_KEY = 'browse:lastClicked';
+	const list = document.querySelector<HTMLUListElement>('ul[data-letter]');
+
+	if (list) {
+		const letter = list.dataset.letter;
+
+		try {
+			const raw = sessionStorage.getItem(STORAGE_KEY);
+			if (raw) {
+				const state = JSON.parse(raw) as { letter: string; slug: string; scrollY: number };
+				if (state.letter === letter) {
+					window.scrollTo(0, state.scrollY);
+					const item = list.querySelector(`li[data-slug="${CSS.escape(state.slug)}"]`);
+					item?.classList.add('recently-visited');
+				}
+			}
+		} catch {
+			// Storage disabled/unavailable — just skip restoration.
+		}
+
+		list.addEventListener('click', (event) => {
+			const li = (event.target as HTMLElement).closest<HTMLLIElement>('li[data-slug]');
+			if (!li?.dataset.slug) return;
+			try {
+				sessionStorage.setItem(
+					STORAGE_KEY,
+					JSON.stringify({ letter, slug: li.dataset.slug, scrollY: window.scrollY })
+				);
+			} catch {
+				// Storage disabled/unavailable — the click still navigates normally.
+			}
+		});
+	}
+</script>

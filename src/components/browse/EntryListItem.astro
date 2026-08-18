@@ -13,7 +13,7 @@ const { slug, lemma, glosses, lang } = Astro.props;
 const firstGloss = glosses.map((g) => glossFor(g, lang)).find((g): g is string => Boolean(g));
 ---
 
-<li>
+<li data-slug={slug}>
 	<a href={localizePath(`/entry/${slug}`, lang)}><strong>{lemma.deu}</strong></a>
 	{firstGloss && <span style="color: var(--color-muted);"> — {firstGloss}</span>}
 </li>
