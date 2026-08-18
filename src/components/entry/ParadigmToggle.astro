@@ -44,4 +44,10 @@ const t = useTranslations(lang);
 		font-size: 0.85em;
 		margin-block: var(--space-2) 0;
 	}
+	/* Hide the grammar-PDF pointer once the paradigm table itself is open — it's a "there's more
+	   detail elsewhere" hint for the collapsed state, redundant once the reader is already looking
+	   at the inflection data. */
+	details[open] + .grammar-link {
+		display: none;
+	}
 </style>

@@ -22,16 +22,16 @@ interface Props {
 const { source, lang } = Astro.props;
 const t = useTranslations(lang);
 
-const sourceLabel = labelFor(source.label, lang) ?? source.code;
+// abbrs-lang labels sometimes carry an internal scope/period note in parentheses (e.g. "Indo-Arisch
+// (global)", "Byzantinisch Griechisch (bis 1453)") — professor-facing classification detail, not
+// meant for the public etymology sentence. Strip it for display.
+const rawSourceLabel = labelFor(source.label, lang) ?? source.code;
+const sourceLabel = rawSourceLabel ? rawSourceLabel.replace(/\s*\([^)]*\)\s*$/, '').trim() : rawSourceLabel;
 const foreignForm = source.foreignForm?.deu ?? source.foreignForm?.int;
 const derivationBase = source.derivationBase?.deu ?? source.derivationBase?.int ?? t('entry.derivedFromBase');
 
 function germanEtymologyName(label: string) {
-	const match = label.match(/^(.*?)(\s*\(.*\))?$/);
-	const base = match?.[1]?.trim() ?? label;
-	const note = match?.[2] ?? '';
-	if (base.endsWith('sch')) return `${base}en${note}`;
-	return `${base}${note}`;
+	return label.endsWith('sch') ? `${label}en` : label;
 }
 
 function etymologySentence() {
