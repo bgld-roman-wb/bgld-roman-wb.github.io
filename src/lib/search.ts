@@ -84,11 +84,15 @@ function matchScore(field: string, query: string, mode: MatchMode): number | nul
 	return null;
 }
 
-function bestFieldScore(fields: string[], query: string, mode: MatchMode): number | null {
-	let best: number | null = null;
+// Returns both the best score and which field earned it — an entry can have several glosses
+// (e.g. "bí": "wie" / "sehr"), and showing the wrong one (always the first) next to a match on
+// the second makes a correct result look like nonsense. The matched field's original text is
+// returned (not the folded one), so accents/casing still display normally.
+function bestFieldMatch(fields: string[], query: string, mode: MatchMode): { score: number; field: string } | null {
+	let best: { score: number; field: string } | null = null;
 	for (const f of fields) {
 		const score = matchScore(fold(f), query, mode);
-		if (score !== null && (best === null || score < best)) best = score;
+		if (score !== null && (best === null || score < best.score)) best = { score, field: f };
 	}
 	return best;
 }
@@ -105,20 +109,28 @@ export function search(index: SearchRecord[], rawQuery: string, opts: SearchOpti
 	const query = fold(rawQuery.trim());
 	if (!query) return [];
 
-	const scored: { record: SearchRecord; score: number }[] = [];
+	const glosses = (record: SearchRecord) => (opts.glossLang === 'de' ? record.gd : record.ge);
+
+	const scored: { record: SearchRecord; score: number; matchedGloss?: string }[] = [];
 	for (const record of index) {
-		const fields = opts.direction === 'roman-to-gloss' ? record.r : opts.glossLang === 'de' ? record.gd : record.ge;
-		const score = bestFieldScore(fields, query, opts.mode);
-		if (score !== null) scored.push({ record, score });
+		if (opts.direction === 'roman-to-gloss') {
+			const match = bestFieldMatch(record.r, query, opts.mode);
+			if (match) scored.push({ record, score: match.score });
+		} else {
+			// The query matched a gloss directly here, so show *that* gloss, not always the
+			// first one — see bestFieldMatch's comment.
+			const match = bestFieldMatch(glosses(record), query, opts.mode);
+			if (match) scored.push({ record, score: match.score, matchedGloss: match.field });
+		}
 	}
 
 	scored.sort((a, b) => a.score - b.score || a.record.d.length - b.record.d.length);
 
 	const limit = opts.limit ?? 20;
-	return scored.slice(0, limit).map(({ record }) => ({
+	return scored.slice(0, limit).map(({ record, matchedGloss }) => ({
 		slug: record.s,
 		headword: record.d,
 		subheadword: record.i,
-		gloss: (opts.glossLang === 'de' ? record.gd : record.ge)[0],
+		gloss: matchedGloss ?? glosses(record)[0],
 	}));
 }
