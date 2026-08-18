@@ -26,17 +26,19 @@ const t = useTranslations(lang);
 // entries with no documented origin, so it keeps its full label rather than becoming a code.
 // Every real language gets its abbrs-lang code (e.g. "INC", "GRC") instead of the spelled-out
 // name — professor's call: the full names ("Indoarisch", "Südslawisch", …) read as prose when
-// what's wanted here is a terse etymological-dictionary-style abbreviation.
+// what's wanted here is a terse etymological-dictionary-style abbreviation. The terse code alone
+// can read as jargon though ("sla." means nothing on its own), so it's a hint-trigger — same
+// dotted-underline tap/hover pattern as GrammarLine's flexion endings — revealing the full
+// language name on demand rather than spelling it out inline.
 const etymNoSource = source.code === 'etym?' ? labelFor(source.label, lang) : null;
 const sourceCode = source.code && source.code !== 'etym?' ? `${source.code.toLowerCase()}.` : null;
+// abbrs-lang labels sometimes carry an internal scope/period note in parentheses (e.g. "Südslawisch
+// (global)", "Byzantinisch Griechisch (bis 1453)") — professor-facing classification detail, not
+// meant for this public hint. Strip it.
+const rawSourceLabel = source.code && source.code !== 'etym?' ? labelFor(source.label, lang) : null;
+const sourceLabelHint = rawSourceLabel ? rawSourceLabel.replace(/\s*\([^)]*\)\s*$/, '').trim() : null;
 const foreignForm = source.foreignForm?.deu ?? source.foreignForm?.int;
 const derivationBase = source.derivationBase?.deu ?? source.derivationBase?.int ?? t('entry.derivedFromBase');
-
-function etymologySentence() {
-	if (etymNoSource) return etymNoSource;
-	if (!sourceCode) return null;
-	return `${t('entry.sourceFrom')} ${sourceCode}${foreignForm ? ` ${foreignForm}` : ''}`;
-}
 ---
 
 {source.code && (
@@ -52,9 +54,15 @@ function etymologySentence() {
 						<span>{derivationBase}</span>
 					)}
 				</>
-			) : (
-				<>{etymologySentence()}</>
-			)}
+			) : etymNoSource ? (
+				<>{etymNoSource}</>
+			) : sourceCode ? (
+				<>
+					{t('entry.sourceFrom')}{' '}
+					<span class="hint-trigger" tabindex="0" data-hint={sourceLabelHint ?? undefined} aria-label={sourceLabelHint ?? sourceCode}>{sourceCode}</span>
+					{foreignForm && <> {foreignForm}</>}
+				</>
+			) : null}
 		</p>
 	</section>
 )}
@@ -76,5 +84,7 @@ function etymologySentence() {
 		font-size: 0.95rem;
 		color: var(--color-muted);
 	}
+	.origin-text .hint-trigger {
+		border-bottom: 1px dotted currentColor;
+	}
 </style>
-
