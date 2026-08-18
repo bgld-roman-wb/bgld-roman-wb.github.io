@@ -23,30 +23,32 @@ const t = useTranslations(lang);
 ---
 
 <div class="search" data-search data-lang={lang}>
-	<div class="direction-row">
-		<span class="direction-label" data-direction-label>{t('search.direction.toGloss')}</span>
-		<button type="button" class="swap-btn" data-direction-swap aria-label={t('search.direction.swap')} title={t('search.direction.swap')}>
-			<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-				<path d="M7 4 3.5 7.5 7 11" />
-				<path d="M3.5 7.5h17" />
-				<path d="m17 13 3.5 3.5-3.5 3.5" />
-				<path d="M20.5 16.5h-17" />
-			</svg>
-		</button>
-	</div>
-	<div class="search-input-wrap">
-		<input
-			type="text"
-			data-search-input
-			placeholder={t('search.placeholderToGloss')}
-			autocomplete="off"
-			spellcheck="false"
-			role="combobox"
-			aria-expanded="false"
-			aria-controls="search-results"
-			aria-autocomplete="list"
-		/>
-		<ul id="search-results" data-search-results class="search-results" role="listbox" hidden></ul>
+	<div class="search-row">
+		<div class="search-input-wrap">
+			<input
+				type="text"
+				data-search-input
+				placeholder={t('search.placeholderToGloss')}
+				autocomplete="off"
+				spellcheck="false"
+				role="combobox"
+				aria-expanded="false"
+				aria-controls="search-results"
+				aria-autocomplete="list"
+			/>
+			<ul id="search-results" data-search-results class="search-results" role="listbox" hidden></ul>
+		</div>
+		<div class="direction-control">
+			<span class="direction-label" data-direction-label>{t('search.direction.toGloss')}</span>
+			<button type="button" class="swap-btn" data-direction-swap aria-label={t('search.direction.swap')} title={t('search.direction.swap')}>
+				<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M7 4 3.5 7.5 7 11" />
+					<path d="M3.5 7.5h17" />
+					<path d="m17 13 3.5 3.5-3.5 3.5" />
+					<path d="M20.5 16.5h-17" />
+				</svg>
+			</button>
+		</div>
 	</div>
 </div>
 
@@ -241,11 +243,17 @@ const t = useTranslations(lang);
 	.search {
 		max-width: 32rem;
 	}
-	.direction-row {
+	.search-row {
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		margin-block-end: var(--space-2);
+	}
+	.direction-control {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		flex-shrink: 0;
+		white-space: nowrap;
 	}
 	.direction-label {
 		font-size: 0.8rem;
@@ -271,6 +279,8 @@ const t = useTranslations(lang);
 	}
 	.search-input-wrap {
 		position: relative;
+		flex: 1;
+		min-width: 0;
 	}
 	[data-search-input] {
 		width: 100%;
