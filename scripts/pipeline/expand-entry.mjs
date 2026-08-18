@@ -34,13 +34,33 @@ export function splitStem(rawLemma) {
 	return { stem: rawLemma.slice(0, hyphenIndex), display: rawLemma.replace(/-/g, '') };
 }
 
-// The single rule that covers both regular and irregular paradigms, verified against real
-// data: a paradigm cell value starting with "-" is a suffix to append to the stem; anything
-// else is a complete word form used verbatim (this is how NM-IRR-*/V-IRR-* columns work —
-// no need to special-case them by key name).
+function hasStressMark(value) {
+	return /[\u0300\u0301]/u.test(value.normalize('NFD'));
+}
+
+function stripStressMarks(value) {
+	return value.normalize('NFD').replace(/[\u0300\u0301]/gu, '').normalize('NFC');
+}
+
+// Only the final word receives the paradigm suffix. Earlier words in a phrase retain their
+// own stress, while the inflected word loses its stem stress when the suffix supplies a new
+// one ("Sabár" + "-áke" -> "Sabaráke"). NFD handles stress combined with another diacritic,
+// such as ö + acute, without removing the umlaut.
+function stripInflectedWordStress(stem) {
+	return stem.replace(/\S+$/u, (word) => stripStressMarks(word));
+}
+
+// A paradigm cell value starting with "-" is a suffix to append to the stem; anything else
+// is a complete word form used verbatim (this is how NM-IRR-*/V-IRR-* columns work). When a
+// suffix carries stress, it replaces the stress marked in the stem; an unstressed suffix
+// leaves the stem stress in place (structure.pdf: "acél-o" -> "aceléske" vs. "acéle(s)").
 function combine(stem, value) {
 	if (value == null) return null;
-	if (value.startsWith('-')) return stem + value.slice(1);
+	if (value.startsWith('-')) {
+		const suffix = value.slice(1);
+		const adjustedStem = hasStressMark(suffix) ? stripInflectedWordStress(stem) : stem;
+		return adjustedStem + suffix;
+	}
 	return value;
 }
 
