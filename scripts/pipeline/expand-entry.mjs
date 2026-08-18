@@ -131,9 +131,10 @@ function germanLabel(entry, code) {
 function buildLabelDisplay(label, gram, kind) {
 	const code = label.filter(Boolean).join(' ');
 	const codes = displayCodes(label, kind);
+	const german = codes.map((c) => germanLabel(gram.get(c), c)).join(', ');
 	return {
 		code,
-		de: codes.map((c) => germanLabel(gram.get(c), c)).join(', '),
+		de: german.replace(/^./u, (first) => first.toLocaleUpperCase('de')),
 		en: codes.map((c) => englishLabel(gram.get(c), c)).join(', '),
 	};
 }
