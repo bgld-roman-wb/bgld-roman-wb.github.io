@@ -241,7 +241,10 @@ const t = useTranslations(lang);
 
 <style>
 	.search {
-		max-width: 44rem;
+		/* No cap of its own — fills the header's .container, same as everything else on the
+		   page (60rem, see --max-width in global.css), so it lines up with the content below
+		   it instead of looking like a narrower, separate element. */
+		width: 100%;
 	}
 	.search-row {
 		display: flex;
