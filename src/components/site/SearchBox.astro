@@ -117,7 +117,7 @@ const t = useTranslations(lang);
 
 		let direction = readDirection();
 		let activeIndex = -1;
-		let currentResults: { slug: string; headword: string; subheadword?: string; gloss?: string }[] = [];
+		let currentResults: { slug: string; headword: string; subheadword?: string; gloss?: string; matchedForm?: string }[] = [];
 
 		function applyDirectionToUI() {
 			directionLabel.textContent = t(DIRECTION_LABEL[direction]);
@@ -159,6 +159,14 @@ const t = useTranslations(lang);
 					sub.className = 'sub';
 					sub.textContent = ` ${r.subheadword}`;
 					a.appendChild(sub);
+				}
+				if (r.matchedForm) {
+					// The query hit a variant spelling, not the headword itself — show it, or the
+					// match would look unexplained (e.g. "hí" for a search on "si").
+					const form = document.createElement('span');
+					form.className = 'matched-form';
+					form.textContent = ` (${r.matchedForm})`;
+					a.appendChild(form);
 				}
 				if (r.gloss) {
 					const gloss = document.createElement('span');
@@ -299,43 +307,107 @@ const t = useTranslations(lang);
 		color: var(--color-text);
 	}
 	[data-search-input]:focus-visible {
-		outline: 3px solid var(--color-accent);
-		outline-offset: 1px;
+		/* A soft ring rather than the site's 3px accent slab: this field is focused for most of a
+		   visit, so a heavy outline would sit on screen the whole time. Plain accent first as the
+		   fallback for engines without color-mix() — they keep a fully opaque ring. */
+		outline: 2px solid var(--color-accent);
+		outline: 2px solid color-mix(in oklab, var(--color-accent) 45%, transparent);
+		outline-offset: 0;
+		border-color: var(--color-accent);
 	}
 	.search-results {
 		position: absolute;
 		z-index: 20;
 		inset-inline: 0;
-		top: calc(100% + 0.3em);
+		top: calc(100% + 0.35em);
 		margin: 0;
 		padding: 0.3em;
 		list-style: none;
 		background: var(--color-bg);
 		border: 1px solid var(--color-border);
-		border-radius: 0.5rem;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+		border-radius: 0.7rem;
+		/* Two layers: a hairline contact shadow so the panel doesn't look pasted on, and a wide
+		   soft one for depth. */
+		box-shadow:
+			0 1px 2px rgb(0 0 0 / 0.05),
+			0 10px 30px rgb(0 0 0 / 0.1);
 		max-height: 22rem;
 		overflow-y: auto;
+		overscroll-behavior: contain;
+		animation: search-results-in 0.12s ease-out;
 	}
-	.search-result a {
+	/* A black shadow is invisible against a dark panel, so depth there comes from a light
+	   hairline plus a deeper ambient shadow. */
+	:global(:root[data-theme='dark']) .search-results {
+		box-shadow:
+			0 0 0 1px rgb(255 255 255 / 0.04),
+			0 12px 34px rgb(0 0 0 / 0.5);
+	}
+	@keyframes search-results-in {
+		from {
+			opacity: 0;
+			transform: translateY(-2px);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.search-results {
+			animation: none;
+		}
+	}
+
+	/* Rows are built by renderResults() at runtime, so they never carry Astro's scoping
+	   attribute — without :global() none of the rules below match, and every row falls back to
+	   the site-wide `a { color: accent }`, which is what made the whole list violet. Each
+	   selector is anchored on .search-results (which is in the template, so it is scoped), so
+	   nothing leaks outside the panel. */
+	.search-results :global(.search-result a) {
 		display: block;
 		padding: 0.4em 0.6em;
-		border-radius: 0.35rem;
+		border-radius: 0.45rem;
 		text-decoration: none;
 		color: var(--color-text);
+		/* One line per result keeps a 20-row list scannable. The headword is what the eye tracks
+		   down the list, so the gloss is the half that gets clipped. */
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-	.search-result.active a,
-	.search-result a:hover {
+	.search-results :global(.search-result strong) {
+		font-weight: 600;
+	}
+	.search-results :global(.search-result.active a),
+	.search-results :global(.search-result a:hover) {
 		background: var(--color-surface);
+		background: color-mix(in oklab, var(--color-accent) 8%, var(--color-bg));
 	}
-	.search-result .sub,
-	.search-result .gloss {
+	/* The accent marks the one row the user is actually on, instead of coloring all twenty. */
+	.search-results :global(.search-result.active strong) {
+		color: var(--color-accent);
+	}
+	.search-results :global(.search-result .sub),
+	.search-results :global(.search-result .matched-form),
+	.search-results :global(.search-result .gloss) {
 		color: var(--color-muted);
-		font-weight: normal;
+		font-weight: 400;
 	}
-	.search-empty {
+	.search-results :global(.search-result .gloss) {
+		font-size: 0.92em;
+	}
+	.search-results :global(.search-empty) {
 		padding: 0.5em 0.6em;
 		color: var(--color-muted);
 		font-size: 0.9rem;
+	}
+
+	/* On phones the input shares its row with the direction control, so a panel anchored to the
+	   input alone is barely half the screen wide and clips most glosses. Anchor it to the whole
+	   row instead — same offset, since .search is exactly as tall as the row. */
+	@media (max-width: 36rem) {
+		.search {
+			position: relative;
+		}
+		.search-input-wrap {
+			position: static;
+		}
 	}
 </style>

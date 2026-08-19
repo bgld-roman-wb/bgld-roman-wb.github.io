@@ -34,6 +34,10 @@ export interface SearchResult {
 	headword: string;
 	subheadword?: string;
 	gloss?: string;
+	/** The Roman word form that actually matched, when it's neither the headword nor the
+	 * subheadword (e.g. a variant spelling like "si" for "hí") — shown so a match doesn't look
+	 * unexplained. Only set for roman-to-gloss searches. */
+	matchedForm?: string;
 }
 
 // Diacritic-fold + casefold, matching Romlex's "Ignore Marks"/"Ignore Case" — always on, in both
@@ -111,11 +115,16 @@ export function search(index: SearchRecord[], rawQuery: string, opts: SearchOpti
 
 	const glosses = (record: SearchRecord) => (opts.glossLang === 'de' ? record.gd : record.ge);
 
-	const scored: { record: SearchRecord; score: number; matchedGloss?: string }[] = [];
+	const scored: { record: SearchRecord; score: number; matchedGloss?: string; matchedForm?: string }[] = [];
 	for (const record of index) {
 		if (opts.direction === 'roman-to-gloss') {
 			const match = bestFieldMatch(record.r, query, opts.mode);
-			if (match) scored.push({ record, score: match.score });
+			if (!match) continue;
+			// An entry's Roman forms include variant spellings (e.g. "hí" also has "si"); if the
+			// query hit one of those and not the headword itself, surface it — otherwise a match
+			// like "si" -> "hí" looks unexplained, same issue as the gloss one above.
+			const matchedForm = match.field !== record.d && match.field !== record.i ? match.field : undefined;
+			scored.push({ record, score: match.score, matchedForm });
 		} else {
 			// The query matched a gloss directly here, so show *that* gloss, not always the
 			// first one — see bestFieldMatch's comment.
@@ -127,10 +136,11 @@ export function search(index: SearchRecord[], rawQuery: string, opts: SearchOpti
 	scored.sort((a, b) => a.score - b.score || a.record.d.length - b.record.d.length);
 
 	const limit = opts.limit ?? 20;
-	return scored.slice(0, limit).map(({ record, matchedGloss }) => ({
+	return scored.slice(0, limit).map(({ record, matchedGloss, matchedForm }) => ({
 		slug: record.s,
 		headword: record.d,
 		subheadword: record.i,
+		matchedForm,
 		gloss: matchedGloss ?? glosses(record)[0],
 	}));
 }
