@@ -73,3 +73,23 @@ export async function homeData() {
 
 	return { count: entries.length, familyCount, pool };
 }
+
+// Prev/next neighbours in the global alphabetical order (the same DEU-based order the browse
+// lists use), so an entry page can offer a "next entry" step without going back to the list.
+// The index is built once per build and shared by all ~10k entry pages in both locales —
+// re-sorting the whole collection per page would be quadratic.
+type Neighbour = { slug: string; lemma: string } | null;
+let neighbourIndex: Promise<Map<string, { prev: Neighbour; next: Neighbour }>> | null = null;
+
+async function buildNeighbourIndex() {
+	const entries = await getCollection('entries');
+	const sorted = sortByLemma(entries.map((e) => e.data));
+	const ref = (i: number): Neighbour =>
+		i >= 0 && i < sorted.length ? { slug: sorted[i].slug, lemma: sorted[i].lemma.deu } : null;
+	return new Map(sorted.map((d, i) => [d.slug, { prev: ref(i - 1), next: ref(i + 1) }]));
+}
+
+export async function entryNeighbours(slug: string) {
+	neighbourIndex ??= buildNeighbourIndex();
+	return (await neighbourIndex).get(slug) ?? { prev: null, next: null };
+}
