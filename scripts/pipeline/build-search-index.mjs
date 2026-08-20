@@ -26,6 +26,10 @@ export function buildSearchIndex(entries) {
 			r: roman,
 			gd: glossesDe,
 			ge: glossesEn,
+			// Word class 1 code (e.g. "N", "V", "ADJ") — powers the power-user word-class filter
+			// in SearchBox.astro. The filter's own option list comes from lib/word-classes.ts
+			// (site-wide, resolved+localized), not from this file.
+			wc: entry.wordClass.class1.code || undefined,
 		};
 	});
 }
