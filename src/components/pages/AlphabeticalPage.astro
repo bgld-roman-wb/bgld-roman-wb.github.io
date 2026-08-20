@@ -48,15 +48,16 @@ const wordClasses = localizedWordClasses([...classMap].map(([code, label]) => ({
 </style>
 
 <script>
-	// Progressive enhancement: remember which entry was clicked and where the list was scrolled,
-	// so that returning here (via the entry page's back link, or the browser back button when
-	// native scroll restoration doesn't kick in) both restores the scroll position and puts a
-	// subtle highlight on the entry last visited. Scoped to sessionStorage (per tab) and to this
-	// one list, keyed by letter — no server state, degrades to a no-op if storage is unavailable.
+	// Progressive enhancement: coming back here (via the entry page's back link, or the browser
+	// back button when native scroll restoration doesn't kick in) puts a subtle highlight on the
+	// entry the reader was last on and brings it back into view. "Last on", not "last clicked" —
+	// entry pages record themselves too, so stepping through several with the next-entry link
+	// moves this along with them. Scoped to sessionStorage (per tab) and to one letter's list —
+	// no server state, degrades to a no-op if storage is unavailable.
 	// Runs on every page load rather than once per document: with view transitions the same
 	// module stays alive while the letter pages swap underneath it, so a one-shot setup would
 	// only ever restore the first list visited.
-	const STORAGE_KEY = 'browse:lastClicked';
+	import { readBrowsePosition, writeBrowsePosition } from '../../lib/browse-position';
 
 	const wired = new WeakSet<HTMLUListElement>();
 
@@ -67,31 +68,26 @@ const wordClasses = localizedWordClasses([...classMap].map(([code, label]) => ({
 		wired.add(list);
 		const letter = list.dataset.letter;
 
-		try {
-			const raw = sessionStorage.getItem(STORAGE_KEY);
-			if (raw) {
-				const state = JSON.parse(raw) as { letter: string; slug: string; scrollY: number };
-				if (state.letter === letter) {
-					window.scrollTo(0, state.scrollY);
-					const item = list.querySelector(`li[data-slug="${CSS.escape(state.slug)}"]`);
-					item?.classList.add('recently-visited');
-				}
+		const state = readBrowsePosition();
+		if (state && state.letter === letter) {
+			const item = list.querySelector(`li[data-slug="${CSS.escape(state.slug)}"]`);
+			item?.classList.add('recently-visited');
+			if (state.scrollY !== null) {
+				// The reader opened this entry from this list, so put the list back exactly as it was.
+				window.scrollTo(0, state.scrollY);
+			} else {
+				// They arrived at the entry some other way (next-entry link, search, word family),
+				// so there is no offset to restore — just bring the entry they were on into view.
+				item?.scrollIntoView({ block: 'center' });
 			}
-		} catch {
-			// Storage disabled/unavailable — just skip restoration.
 		}
 
 		list.addEventListener('click', (event) => {
 			const li = (event.target as HTMLElement).closest<HTMLLIElement>('li[data-slug]');
-			if (!li?.dataset.slug) return;
-			try {
-				sessionStorage.setItem(
-					STORAGE_KEY,
-					JSON.stringify({ letter, slug: li.dataset.slug, scrollY: window.scrollY })
-				);
-			} catch {
-				// Storage disabled/unavailable — the click still navigates normally.
-			}
+			if (!li?.dataset.slug || !letter) return;
+			// Opened from the list, so the exact offset is worth keeping — this is the one path
+			// that can restore the list pixel-for-pixel on the way back.
+			writeBrowsePosition({ letter, slug: li.dataset.slug, scrollY: window.scrollY });
 		});
 	}
 	}

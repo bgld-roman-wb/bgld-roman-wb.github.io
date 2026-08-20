@@ -7,20 +7,49 @@ interface Props {
 	description?: string;
 	lang: Locale;
 	letter: string;
+	slug: string;
 	next?: { slug: string; lemma: string } | null;
 }
 
-const { title, description, lang, letter, next } = Astro.props;
+const { title, description, lang, letter, slug, next } = Astro.props;
 const t = useTranslations(lang);
 ---
 
 <BaseLayout title={title} description={description} lang={lang}>
-	<nav class="entry-nav" data-pagefind-ignore>
+	<nav class="entry-nav" data-entry-nav data-slug={slug} data-letter={letter} data-pagefind-ignore>
 		<a href={localizePath(`/browse/alphabetical/${letter}`, lang)}>{t('browse.backToEntries')}</a>
 		{next && <a href={localizePath(`/entry/${next.slug}`, lang)} rel="next">{t('entry.next')}</a>}
 	</nav>
 	<slot />
 </BaseLayout>
+
+<script>
+	// "Back to entries" should land on whatever entry the reader is actually looking at. Following
+	// the next-entry link a few times used to leave the browse list highlighting — and scrolled to
+	// — the word they first clicked, because only the list itself ever recorded a position. So
+	// record the current entry on arrival, however the reader got here.
+	//
+	// scrollY is deliberately null: the list offset that would show this entry isn't knowable from
+	// here (and the offset stored by an earlier click points at a different word entirely), so the
+	// list scrolls the highlighted entry into view instead. The one case that keeps a pixel-exact
+	// offset is going straight back to the entry that was clicked from the list — left untouched
+	// below, so that return still restores the list exactly as it was left.
+	import { readBrowsePosition, writeBrowsePosition } from '../lib/browse-position';
+
+	function rememberCurrentEntry() {
+		const nav = document.querySelector<HTMLElement>('[data-entry-nav]');
+		const slug = nav?.dataset.slug;
+		const letter = nav?.dataset.letter;
+		if (!slug || !letter) return;
+
+		const stored = readBrowsePosition();
+		if (stored?.slug === slug && stored.letter === letter) return; // keep the exact offset
+		writeBrowsePosition({ letter, slug, scrollY: null });
+	}
+
+	rememberCurrentEntry();
+	document.addEventListener('astro:page-load', rememberCurrentEntry);
+</script>
 
 <style>
 	.entry-nav {
