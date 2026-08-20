@@ -53,10 +53,18 @@ const wordClasses = localizedWordClasses([...classMap].map(([code, label]) => ({
 	// native scroll restoration doesn't kick in) both restores the scroll position and puts a
 	// subtle highlight on the entry last visited. Scoped to sessionStorage (per tab) and to this
 	// one list, keyed by letter — no server state, degrades to a no-op if storage is unavailable.
+	// Runs on every page load rather than once per document: with view transitions the same
+	// module stays alive while the letter pages swap underneath it, so a one-shot setup would
+	// only ever restore the first list visited.
 	const STORAGE_KEY = 'browse:lastClicked';
+
+	const wired = new WeakSet<HTMLUListElement>();
+
+	function restoreAndTrack() {
 	const list = document.querySelector<HTMLUListElement>('ul[data-letter]');
 
-	if (list) {
+	if (list && !wired.has(list)) {
+		wired.add(list);
 		const letter = list.dataset.letter;
 
 		try {
@@ -86,4 +94,8 @@ const wordClasses = localizedWordClasses([...classMap].map(([code, label]) => ({
 			}
 		});
 	}
+	}
+
+	restoreAndTrack();
+	document.addEventListener('astro:page-load', restoreAndTrack);
 </script>

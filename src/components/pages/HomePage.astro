@@ -48,15 +48,26 @@ const entryPathPrefix = localizePath('/entry/', lang);
 
 <script is:inline define:vars={{ wotdPool, entryPathPrefix }}>
 	// Re-pick the word of the day on the visitor's clock (build-time pick goes stale between deploys).
-	const dayNumber = Math.floor(Date.now() / 86400000);
-	const pick = wotdPool[dayNumber % wotdPool.length];
-	const word = document.getElementById('wotd-word');
-	const gloss = document.getElementById('wotd-gloss');
-	if (pick && word && word.textContent !== pick.word) {
-		word.textContent = pick.word;
-		word.setAttribute('href', entryPathPrefix + pick.slug);
-		gloss.textContent = '— ' + pick.gloss;
-	}
+	// Also re-run per page load: coming back to the home page via client-side navigation swaps in
+	// a fresh (build-time) word, and this script is not re-executed on swap.
+	(function () {
+		function pickWord() {
+			const dayNumber = Math.floor(Date.now() / 86400000);
+			const pick = wotdPool[dayNumber % wotdPool.length];
+			const word = document.getElementById('wotd-word');
+			const gloss = document.getElementById('wotd-gloss');
+			if (pick && word && word.textContent !== pick.word) {
+				word.textContent = pick.word;
+				word.setAttribute('href', entryPathPrefix + pick.slug);
+				gloss.textContent = '— ' + pick.gloss;
+			}
+		}
+		pickWord();
+		if (!window.__wotdBound) {
+			window.__wotdBound = true;
+			document.addEventListener('astro:page-load', pickWord);
+		}
+	})();
 </script>
 
 <style>

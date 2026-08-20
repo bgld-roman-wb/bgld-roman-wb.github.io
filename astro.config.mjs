@@ -13,4 +13,13 @@ export default defineConfig({
 		locales: ['de', 'en'],
 		routing: { prefixDefaultLocale: false },
 	},
+	// Looking up a word is a burst activity: people follow a search hit, bounce back, try the next
+	// candidate. Every one of those is a separate document over the network, so warm the HTML on
+	// hover/focus — by the time the click lands the page is already in the browser cache. Entry
+	// pages are 13-22KB of static HTML, so prefetching liberally costs almost nothing, and Astro
+	// skips it on save-data/slow connections anyway.
+	prefetch: {
+		prefetchAll: true,
+		defaultStrategy: 'hover',
+	},
 });

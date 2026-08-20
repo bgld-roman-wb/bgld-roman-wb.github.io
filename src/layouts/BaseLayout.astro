@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
 import Header from '../components/site/Header.astro';
 import Footer from '../components/site/Footer.astro';
 import { defaultLang, type Locale } from '../i18n/ui';
@@ -21,15 +22,25 @@ const { title, description, lang = defaultLang } = Astro.props;
 		<script is:inline>
 			// Runs before first paint to avoid a flash of the wrong theme. Light is the default —
 			// this only ever adds data-theme="dark", matching a stored preference from ThemeToggle.
-			try {
-				if (localStorage.getItem('theme') === 'dark') {
-					document.documentElement.dataset.theme = 'dark';
+			// Also re-run on astro:after-swap: the view-transition swap replaces <html>'s attributes
+			// wholesale with the incoming document's, which drops the runtime-set data-theme, so a
+			// dark-mode reader would get one light frame per navigation without this.
+			(function () {
+				function applyTheme() {
+					try {
+						if (localStorage.getItem('theme') === 'dark') {
+							document.documentElement.dataset.theme = 'dark';
+						}
+					} catch (e) {}
 				}
-			} catch (e) {}
+				applyTheme();
+				document.addEventListener('astro:after-swap', applyTheme);
+			})();
 		</script>
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		{description && <meta name="description" content={description} />}
 		<title>{title} · Burgenland Roman Dictionary</title>
+		<ClientRouter />
 	</head>
 	<body>
 		<a class="skip-link" href="#main">Skip to content</a>
@@ -44,17 +55,39 @@ const { title, description, lang = defaultLang } = Astro.props;
 			// Hint bubbles open on focus (tap, on touch screens). On iOS, tapping elsewhere doesn't
 			// reliably blur a focused non-input element, so the bubble could get stuck open — close it
 			// on any tap outside, and let a second tap on the trigger itself toggle it off.
-			document.addEventListener('pointerdown', (e) => {
-				const active = document.activeElement;
-				if (!(active instanceof HTMLElement) || !active.classList.contains('hint-trigger')) return;
-				const tapped = e.target instanceof Element ? e.target.closest('.hint-trigger') : null;
-				if (tapped === active) {
-					e.preventDefault(); // a second tap would just refocus — toggle off instead
-					active.blur();
-				} else if (!tapped) {
-					active.blur();
-				}
-			});
+			//
+			// Inline scripts re-execute on every view transition, so bind once per document and let
+			// the delegated listener cover pages swapped in later.
+			if (!window.__hintTriggerBound) {
+				window.__hintTriggerBound = true;
+				document.addEventListener('pointerdown', (e) => {
+					const active = document.activeElement;
+					if (!(active instanceof HTMLElement) || !active.classList.contains('hint-trigger')) return;
+					const tapped = e.target instanceof Element ? e.target.closest('.hint-trigger') : null;
+					if (tapped === active) {
+						e.preventDefault(); // a second tap would just refocus — toggle off instead
+						active.blur();
+					} else if (!tapped) {
+						active.blur();
+					}
+				});
+			}
 		</script>
 	</body>
 </html>
+
+<style is:global>
+	/* Astro's default cross-fade is 200ms in each direction — long enough to read as a transition
+	   when you're stepping through a word list. Keep the fade (it hides the swap frame) but make
+	   it short enough to feel like the page simply changed. */
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation-duration: 90ms;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-old(root),
+		::view-transition-new(root) {
+			animation: none;
+		}
+	}
+</style>

@@ -22,7 +22,13 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 ---
 
-<div class="search" data-search data-lang={lang}>
+<!-- Persisted across view transitions: the search box holds the parsed 1.8MB index in the
+     module scope of its script, and re-fetching/re-parsing that on every word you open is what
+     made stepping through the dictionary feel heavy. Keeping the node keeps the index, the
+     listeners, and whatever the reader had typed. The name has to be a literal (the compiler does
+     not evaluate an expression here), so the same box is reused across the two app languages and
+     the script re-localizes it on navigation — see syncLocale() below. -->
+<div class="search" data-search data-lang={lang} transition:persist="search">
 	<div class="search-row">
 		<div class="search-input-wrap">
 			<input
@@ -55,6 +61,8 @@ const t = useTranslations(lang);
 <script>
 	import { search, type Direction, type SearchRecord } from '../../lib/search';
 	import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
+	import { prefetch } from 'astro:prefetch';
+	import { navigate } from 'astro:transitions/client';
 
 	const STORAGE_KEY = 'search:direction';
 	// Single source of truth for these strings is ui.ts (via useTranslations), same as every
@@ -87,6 +95,10 @@ const t = useTranslations(lang);
 	// it — a 'focus' listener alone is fragile (e.g. programmatic or assistive-tech focus doesn't
 	// always dispatch a real focus event), and at ~400KB gzipped this is cheap to front-load on a
 	// site whose whole purpose is this search.
+	//
+	// This module is evaluated once per document, and view transitions keep the document alive
+	// across navigations, so `index` is parsed exactly once per visit rather than once per word
+	// opened (the parse alone was ~50ms on desktop, several times that on a phone).
 	loadIndex();
 
 	function readDirection(): Direction {
@@ -107,9 +119,26 @@ const t = useTranslations(lang);
 		}
 	}
 
-	for (const root of document.querySelectorAll<HTMLElement>('[data-search]')) {
-		const lang = (root.dataset.lang as Locale) ?? 'de';
-		const t = useTranslations(lang);
+	// The header search is transition:persist'ed, so on most navigations the same node comes
+	// through with its listeners intact; but a locale switch (or any page that renders a fresh
+	// box) brings a new node that still needs wiring. Bind on every page load, skipping nodes
+	// already handled — cheap, and it never double-binds.
+	const wired = new WeakSet<HTMLElement>();
+
+	function wireSearchBoxes() {
+		for (const root of document.querySelectorAll<HTMLElement>('[data-search]')) {
+			if (wired.has(root)) continue;
+			wired.add(root);
+			wireSearchBox(root);
+		}
+	}
+
+	function wireSearchBox(root: HTMLElement) {
+		// Not captured once: this box outlives the page it was rendered on, so after a switch to
+		// the other app language it is still the same node with the old locale baked in. Track the
+		// live document language instead and re-localize on navigation (syncLocale, below).
+		let lang = (root.dataset.lang as Locale) ?? 'de';
+		let t = useTranslations(lang);
 		const input = root.querySelector<HTMLInputElement>('[data-search-input]')!;
 		const resultsEl = root.querySelector<HTMLUListElement>('[data-search-results]')!;
 		const directionLabel = root.querySelector<HTMLElement>('[data-direction-label]')!;
@@ -179,6 +208,15 @@ const t = useTranslations(lang);
 			});
 			resultsEl.hidden = false;
 			input.setAttribute('aria-expanded', 'true');
+			// The top hit is the one most people take; warm it as soon as the list appears so the
+			// click has nothing left to wait for. The rest are warmed on hover/arrow (below).
+			if (currentResults[0]) prefetch(localizePath(`/entry/${currentResults[0].slug}`, lang));
+		}
+
+		// Arrowing onto a row is the keyboard equivalent of hovering it.
+		function warmActive() {
+			const r = currentResults[activeIndex];
+			if (r) prefetch(localizePath(`/entry/${r.slug}`, lang));
 		}
 
 		function runSearch() {
@@ -224,16 +262,20 @@ const t = useTranslations(lang);
 				activeIndex = Math.min(activeIndex + 1, currentResults.length - 1);
 				renderResults();
 				input.setAttribute('aria-activedescendant', `search-option-${activeIndex}`);
+				warmActive();
 			} else if (e.key === 'ArrowUp') {
 				e.preventDefault();
 				activeIndex = Math.max(activeIndex - 1, 0);
 				renderResults();
 				input.setAttribute('aria-activedescendant', `search-option-${activeIndex}`);
+				warmActive();
 			} else if (e.key === 'Enter') {
 				const target = activeIndex >= 0 ? currentResults[activeIndex] : currentResults[0];
 				if (target) {
 					e.preventDefault();
-					window.location.href = localizePath(`/entry/${target.slug}`, lang);
+					// navigate(), not location.href — the latter would force a full document load and
+					// throw away the parsed index this box is holding.
+					navigate(localizePath(`/entry/${target.slug}`, lang));
 				}
 			} else if (e.key === 'Escape') {
 				closeResults();
@@ -241,10 +283,45 @@ const t = useTranslations(lang);
 			}
 		});
 
+		// Result rows are built at runtime, so Astro's own per-anchor hover prefetch (which binds
+		// on page load) never sees them. Delegate instead: pointing at a row is the strongest
+		// signal there is that it's about to be clicked.
+		resultsEl.addEventListener(
+			'pointerover',
+			(e) => {
+				const a = (e.target as Element | null)?.closest?.('a');
+				if (a instanceof HTMLAnchorElement) prefetch(a.href);
+			},
+			{ passive: true }
+		);
+
 		document.addEventListener('click', (e) => {
 			if (!root.contains(e.target as Node)) closeResults();
 		});
+
+		// The box survives navigation, so its open dropdown would otherwise stay parked on top of
+		// the entry the reader just opened. Drop the panel but keep the query — going back to the
+		// list is one focus away, and no re-search or re-parse is involved.
+		document.addEventListener('astro:after-swap', () => {
+			if (!resultsEl.hidden) closeResults();
+		});
+
+		// Switching app language navigates to the /en/ (or /) twin of the current page; the box
+		// itself is persisted, so nothing about it would change without this. Re-point it at the
+		// new locale: labels, placeholder, which gloss language is searched, and where results link.
+		document.addEventListener('astro:page-load', () => {
+			const docLang: Locale = document.documentElement.lang === 'en' ? 'en' : 'de';
+			if (docLang === lang) return;
+			lang = docLang;
+			t = useTranslations(lang);
+			root.dataset.lang = lang;
+			applyDirectionToUI();
+			if (input.value.trim()) runSearch();
+		});
 	}
+
+	wireSearchBoxes();
+	document.addEventListener('astro:page-load', wireSearchBoxes);
 </script>
 
 <style>

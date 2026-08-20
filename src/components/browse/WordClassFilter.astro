@@ -42,7 +42,14 @@ const t = useTranslations(lang);
 
 <script>
 	// One listener setup per filter instance; each targets the nearest entry list on the page.
+	// Module scripts evaluate once per document, and view transitions keep the document across
+	// navigations — so re-run this on every page load, skipping filters already wired.
+	const wired = new WeakSet<HTMLDetailsElement>();
+
+	function wireFilters() {
 	for (const root of document.querySelectorAll<HTMLDetailsElement>('[data-filter]')) {
+		if (wired.has(root)) continue;
+		wired.add(root);
 		const checkboxes = root.querySelectorAll<HTMLInputElement>('[data-filter-class]');
 		const clearBtn = root.querySelector<HTMLButtonElement>('[data-filter-clear]')!;
 		const list = document.querySelector<HTMLElement>('[data-entry-list]');
@@ -78,6 +85,10 @@ const t = useTranslations(lang);
 			if (root.open && !root.contains(e.target as Node)) root.open = false;
 		});
 	}
+	}
+
+	wireFilters();
+	document.addEventListener('astro:page-load', wireFilters);
 </script>
 
 <style>
