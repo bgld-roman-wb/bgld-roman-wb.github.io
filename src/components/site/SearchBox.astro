@@ -183,23 +183,26 @@ const t = useTranslations(lang);
 			parent.appendChild(document.createTextNode(text.slice(at)));
 		}
 
-		function renderResults() {
-			resultsEl.innerHTML = '';
-			if (currentResults.length === 0) {
-				const li = document.createElement('li');
-				li.className = 'search-empty';
-				li.textContent = t('search.noResults');
-				resultsEl.appendChild(li);
-				resultsEl.hidden = false;
-				input.setAttribute('aria-expanded', 'true');
-				return;
-			}
+		// Rows arrive a page at a time, as the panel is scrolled (and as the arrow keys walk past
+		// the end). A fragment like "ar" matches ~2000 entries; building all of those up front is
+		// far more DOM than anyone scrolls through, and the earlier fix — a hard cap of 20 — hid
+		// the rest behind a scrollbar that just stopped.
+		const PAGE_SIZE = 20;
+		let renderedCount = 0;
+		// Reused across renders and kept as the list's last child, where it reads as a footer:
+		// the only thing that tells the reader how much is still below the fold.
+		const countRow = document.createElement('li');
+		countRow.className = 'search-count';
+		countRow.setAttribute('role', 'presentation');
+
+		function appendPage() {
 			// Roman fields and glosses are searched separately (that's what direction *means*), so
 			// only the side that was searched gets marked — highlighting a stray "ess" in a gloss
 			// during a Roman search would point at something that had no part in the match.
 			const romanQuery = highlightDirection === 'roman-to-gloss' ? highlightQuery : '';
 			const glossQuery = highlightDirection === 'gloss-to-roman' ? highlightQuery : '';
-			currentResults.forEach((r, i) => {
+			currentResults.slice(renderedCount, renderedCount + PAGE_SIZE).forEach((r, k) => {
+				const i = renderedCount + k;
 				const li = document.createElement('li');
 				li.id = `search-option-${i}`;
 				li.setAttribute('role', 'option');
@@ -236,6 +239,25 @@ const t = useTranslations(lang);
 				li.appendChild(a);
 				resultsEl.appendChild(li);
 			});
+			renderedCount = Math.min(renderedCount + PAGE_SIZE, currentResults.length);
+			countRow.textContent = `${currentResults.length} ${t(currentResults.length === 1 ? 'search.resultsOne' : 'search.resultsMany')}`;
+			resultsEl.appendChild(countRow); // appendChild moves it, so it stays last
+		}
+
+		function renderResults() {
+			resultsEl.innerHTML = '';
+			renderedCount = 0;
+			if (currentResults.length === 0) {
+				const li = document.createElement('li');
+				li.className = 'search-empty';
+				li.textContent = t('search.noResults');
+				resultsEl.appendChild(li);
+				resultsEl.hidden = false;
+				input.setAttribute('aria-expanded', 'true');
+				return;
+			}
+			appendPage();
+			resultsEl.scrollTop = 0;
 			resultsEl.hidden = false;
 			input.setAttribute('aria-expanded', 'true');
 			// The top hit is the one most people take; warm it as soon as the list appears so the
@@ -243,8 +265,21 @@ const t = useTranslations(lang);
 			if (currentResults[0]) prefetch(localizePath(`/entry/${currentResults[0].slug}`, lang));
 		}
 
-		// Arrowing onto a row is the keyboard equivalent of hovering it.
-		function warmActive() {
+		// Moving the selection used to re-render the entire list. With rows arriving lazily that
+		// would throw away every page already loaded (and the scroll position with it), so toggle
+		// the class in place instead — and pull in the next page when the selection reaches the
+		// end of what's rendered. Arrowing onto a row is the keyboard equivalent of hovering it,
+		// so it warms the target too.
+		function setActive(next: number) {
+			if (next >= renderedCount && renderedCount < currentResults.length) appendPage();
+			const rows = resultsEl.querySelectorAll<HTMLLIElement>('.search-result');
+			rows[activeIndex]?.classList.remove('active');
+			activeIndex = Math.max(0, Math.min(next, rows.length - 1));
+			const row = rows[activeIndex];
+			if (!row) return;
+			row.classList.add('active');
+			row.scrollIntoView({ block: 'nearest' });
+			input.setAttribute('aria-activedescendant', row.id);
 			const r = currentResults[activeIndex];
 			if (r) prefetch(localizePath(`/entry/${r.slug}`, lang));
 		}
@@ -258,10 +293,13 @@ const t = useTranslations(lang);
 			const glossLang = lang === 'en' ? 'en' : 'de';
 			// Exact first, so a clean match isn't crowded out by looser fuzzy noise; fuzzy only
 			// steps in when exact finds nothing, so a typo still isn't a dead end.
-			let results = search(index, query, { direction, mode: 'exact', glossLang, limit: 20 });
+			// Unlimited: every match is scored and kept, and renderResults() pages them into the
+			// DOM. The scan already visits all ~12.5k records either way, so the only extra cost
+			// is sorting and mapping the ones that matched.
+			let results = search(index, query, { direction, mode: 'exact', glossLang, limit: Infinity });
 			highlightQuery = query.trim();
 			if (results.length === 0) {
-				results = search(index, query, { direction, mode: 'fuzzy', glossLang, limit: 20 });
+				results = search(index, query, { direction, mode: 'fuzzy', glossLang, limit: Infinity });
 				highlightQuery = '';
 			}
 			highlightDirection = direction;
@@ -292,16 +330,10 @@ const t = useTranslations(lang);
 			if (resultsEl.hidden) return;
 			if (e.key === 'ArrowDown') {
 				e.preventDefault();
-				activeIndex = Math.min(activeIndex + 1, currentResults.length - 1);
-				renderResults();
-				input.setAttribute('aria-activedescendant', `search-option-${activeIndex}`);
-				warmActive();
+				setActive(activeIndex + 1);
 			} else if (e.key === 'ArrowUp') {
 				e.preventDefault();
-				activeIndex = Math.max(activeIndex - 1, 0);
-				renderResults();
-				input.setAttribute('aria-activedescendant', `search-option-${activeIndex}`);
-				warmActive();
+				setActive(activeIndex - 1);
 			} else if (e.key === 'Enter') {
 				const target = activeIndex >= 0 ? currentResults[activeIndex] : currentResults[0];
 				if (target) {
@@ -315,6 +347,17 @@ const t = useTranslations(lang);
 				input.blur();
 			}
 		});
+
+		// The reason the list can be unbounded: another page lands just before the scrollbar runs
+		// out, so the panel never reaches a bottom that isn't the real one.
+		resultsEl.addEventListener(
+			'scroll',
+			() => {
+				if (renderedCount >= currentResults.length) return;
+				if (resultsEl.scrollTop + resultsEl.clientHeight >= resultsEl.scrollHeight - 120) appendPage();
+			},
+			{ passive: true }
+		);
 
 		// Result rows are built at runtime, so Astro's own per-anchor hover prefetch (which binds
 		// on page load) never sees them. Delegate instead: pointing at a row is the strongest
@@ -519,6 +562,20 @@ const t = useTranslations(lang);
 	}
 	.search-results :global(.search-result .gloss) {
 		font-size: 0.92em;
+	}
+	/* Sticky so the total stays in view while scrolling — the count is only useful if you can see
+	   it from wherever you are in the list. */
+	.search-results :global(.search-count) {
+		position: sticky;
+		bottom: 0;
+		padding: 0.3em 0.6em;
+		text-align: right;
+		font-size: 0.75rem;
+		color: var(--color-muted);
+		/* Opaque, so rows scroll behind it rather than through it; the hairline keeps a row that
+		   is half-covered from looking like it was cut off mid-word. */
+		background: var(--color-bg);
+		border-top: 1px solid var(--color-border);
 	}
 	.search-results :global(.search-empty) {
 		padding: 0.5em 0.6em;
