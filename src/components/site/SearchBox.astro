@@ -59,7 +59,7 @@ const t = useTranslations(lang);
 </div>
 
 <script>
-	import { search, type Direction, type SearchRecord } from '../../lib/search';
+	import { matchRanges, search, type Direction, type SearchRecord } from '../../lib/search';
 	import { localizePath, useTranslations, type Locale } from '../../i18n/ui';
 	import { prefetch } from 'astro:prefetch';
 	import { navigate } from 'astro:transitions/client';
@@ -146,6 +146,11 @@ const t = useTranslations(lang);
 
 		let direction = readDirection();
 		let activeIndex = -1;
+		// What to paint in the rendered rows, captured at search time: the query only marks up the
+		// field the search actually ran against, and it is cleared for fuzzy hits, where by
+		// definition no literal substring exists to point at.
+		let highlightQuery = '';
+		let highlightDirection: Direction = direction;
 		let currentResults: { slug: string; headword: string; subheadword?: string; gloss?: string; matchedForm?: string }[] = [];
 
 		function applyDirectionToUI() {
@@ -162,6 +167,22 @@ const t = useTranslations(lang);
 			activeIndex = -1;
 		}
 
+		// Writes `text` into `parent`, wrapping the parts the query matched in <mark>. Assembled as
+		// nodes rather than an HTML string: this is the one place a reader's own typing reaches the
+		// DOM, and matchRanges() maps the folded match back onto the displayed spelling, so a search
+		// for "atscha" marks the accented "átscha" correctly.
+		function appendHighlighted(parent: HTMLElement, text: string, query: string) {
+			let at = 0;
+			for (const [start, end] of query ? matchRanges(text, query) : []) {
+				if (start > at) parent.appendChild(document.createTextNode(text.slice(at, start)));
+				const mark = document.createElement('mark');
+				mark.textContent = text.slice(start, end);
+				parent.appendChild(mark);
+				at = end;
+			}
+			parent.appendChild(document.createTextNode(text.slice(at)));
+		}
+
 		function renderResults() {
 			resultsEl.innerHTML = '';
 			if (currentResults.length === 0) {
@@ -173,6 +194,11 @@ const t = useTranslations(lang);
 				input.setAttribute('aria-expanded', 'true');
 				return;
 			}
+			// Roman fields and glosses are searched separately (that's what direction *means*), so
+			// only the side that was searched gets marked — highlighting a stray "ess" in a gloss
+			// during a Roman search would point at something that had no part in the match.
+			const romanQuery = highlightDirection === 'roman-to-gloss' ? highlightQuery : '';
+			const glossQuery = highlightDirection === 'gloss-to-roman' ? highlightQuery : '';
 			currentResults.forEach((r, i) => {
 				const li = document.createElement('li');
 				li.id = `search-option-${i}`;
@@ -181,12 +207,13 @@ const t = useTranslations(lang);
 				const a = document.createElement('a');
 				a.href = localizePath(`/entry/${r.slug}`, lang);
 				const headword = document.createElement('strong');
-				headword.textContent = r.headword;
+				appendHighlighted(headword, r.headword, romanQuery);
 				a.appendChild(headword);
 				if (r.subheadword) {
 					const sub = document.createElement('span');
 					sub.className = 'sub';
-					sub.textContent = ` ${r.subheadword}`;
+					sub.appendChild(document.createTextNode(' '));
+					appendHighlighted(sub, r.subheadword, romanQuery);
 					a.appendChild(sub);
 				}
 				if (r.matchedForm) {
@@ -194,13 +221,16 @@ const t = useTranslations(lang);
 					// match would look unexplained (e.g. "hí" for a search on "si").
 					const form = document.createElement('span');
 					form.className = 'matched-form';
-					form.textContent = ` (${r.matchedForm})`;
+					form.appendChild(document.createTextNode(' ('));
+					appendHighlighted(form, r.matchedForm, romanQuery);
+					form.appendChild(document.createTextNode(')'));
 					a.appendChild(form);
 				}
 				if (r.gloss) {
 					const gloss = document.createElement('span');
 					gloss.className = 'gloss';
-					gloss.textContent = ` — ${r.gloss}`;
+					gloss.appendChild(document.createTextNode(' — '));
+					appendHighlighted(gloss, r.gloss, glossQuery);
 					a.appendChild(gloss);
 				}
 				li.appendChild(a);
@@ -229,9 +259,12 @@ const t = useTranslations(lang);
 			// Exact first, so a clean match isn't crowded out by looser fuzzy noise; fuzzy only
 			// steps in when exact finds nothing, so a typo still isn't a dead end.
 			let results = search(index, query, { direction, mode: 'exact', glossLang, limit: 20 });
+			highlightQuery = query.trim();
 			if (results.length === 0) {
 				results = search(index, query, { direction, mode: 'fuzzy', glossLang, limit: 20 });
+				highlightQuery = '';
 			}
+			highlightDirection = direction;
 			currentResults = results;
 			activeIndex = -1;
 			renderResults();
@@ -460,6 +493,23 @@ const t = useTranslations(lang);
 	/* The accent marks the one row the user is actually on, instead of coloring all twenty. */
 	.search-results :global(.search-result.active strong) {
 		color: var(--color-accent);
+	}
+	/* The matched letters, per direction: a whisper of the accent behind them, no color or weight
+	   change, so twenty rows still read as one block of text and the eye picks out the match
+	   rather than being pulled to it. Plain --color-surface first for engines without
+	   color-mix(); `mark`'s UA default is a hard yellow slab, so the background is always set. */
+	.search-results :global(.search-result mark) {
+		background: var(--color-surface);
+		background: color-mix(in oklab, var(--color-accent) 14%, transparent);
+		color: inherit;
+		border-radius: 0.2em;
+		padding: 0 0.08em;
+	}
+	/* The active/hovered row already sits on an 8% accent wash, which all but swallows a 14%
+	   mark — lift it just enough to stay legible against that. */
+	.search-results :global(.search-result.active mark),
+	.search-results :global(.search-result a:hover mark) {
+		background: color-mix(in oklab, var(--color-accent) 22%, transparent);
 	}
 	.search-results :global(.search-result .sub),
 	.search-results :global(.search-result .matched-form),

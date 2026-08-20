@@ -144,3 +144,35 @@ export function search(index: SearchRecord[], rawQuery: string, opts: SearchOpti
 		gloss: matchedGloss ?? glosses(record)[0],
 	}));
 }
+
+// Where a query lands inside a displayed string, in that string's *own* coordinates — used to
+// paint the match in the results list. Matching runs on fold()ed text, whose offsets don't line
+// up with the source ("Sabára" is 7 code units decomposed but folds to 6), so folding one
+// character at a time and recording where each folded unit came from keeps the mapping exact.
+// Returns every occurrence, as [start, end) pairs into `text`.
+export function matchRanges(text: string, rawQuery: string): [number, number][] {
+	const query = fold(rawQuery.trim());
+	if (!query) return [];
+
+	let folded = '';
+	const origin: number[] = []; // index in `folded` -> index in `text`
+	for (let i = 0; i < text.length; i++) {
+		const piece = fold(text[i]);
+		for (let k = 0; k < piece.length; k++) {
+			folded += piece[k];
+			origin.push(i);
+		}
+	}
+
+	const ranges: [number, number][] = [];
+	for (let from = 0; ; ) {
+		const at = folded.indexOf(query, from);
+		if (at === -1) break;
+		const after = at + query.length;
+		// Ends at the source character the next folded unit came from, so combining marks that
+		// folded away still sit inside the range rather than being orphaned after it.
+		ranges.push([origin[at], after < origin.length ? origin[after] : text.length]);
+		from = after;
+	}
+	return ranges;
+}
