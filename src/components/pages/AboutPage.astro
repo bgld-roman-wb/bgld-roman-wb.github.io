@@ -10,7 +10,6 @@ interface Props {
 const { lang } = Astro.props;
 const t = useTranslations(lang);
 const content = about[lang];
-const manuscriptHref = `/manuscript-${lang}.pdf`;
 ---
 
 <BaseLayout title={t('about.title')} lang={lang}>
@@ -32,8 +31,6 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 				))}
 			</p>
 		</section>
-
-		<a class="download" href={manuscriptHref} download>{t('about.download')}</a>
 	</article>
 </BaseLayout>
 
@@ -64,17 +61,5 @@ const manuscriptHref = `/manuscript-${lang}.pdf`;
 	}
 	.staff-list {
 		line-height: 1.8;
-	}
-	.download {
-		display: inline-block;
-		margin-block-end: var(--space-4);
-		text-decoration: none;
-		color: var(--color-accent);
-		border: 1px solid var(--color-border);
-		border-radius: 0.4rem;
-		padding: var(--space-1) var(--space-3);
-	}
-	.download:hover {
-		border-color: var(--color-accent);
 	}
 </style>
