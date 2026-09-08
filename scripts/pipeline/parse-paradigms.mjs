@@ -3,6 +3,12 @@ import { SHEETS } from './constants.mjs';
 
 const GRID_ROW_SCAN_LIMIT = 200; // far beyond any real grid (largest observed: V-CONJG at 32 rows)
 
+// A blank grid cell is only meaningful at RECT/NOM/SG (the zero-ending "∅" paradigms mark it
+// blank on purpose — see expand-entry.mjs's combine()). Anywhere else it's missing data.
+function isNomSgLabel(label) {
+	return label[0] === 'RECT' && label[1] === 'NOM' && label[2] === 'SG';
+}
+
 // Row 1's INT/DEU marker cells are merged across their whole column range, and exceljs
 // propagates the merged value to every column in that range — so this must take the FIRST
 // matching column (where the block starts), not the last one it sees.
@@ -58,11 +64,17 @@ function readKeyedGrid(sheet, labelCols, dataStartRow, validator, sheetName) {
 			break;
 		}
 		for (const [key, cols] of keyColumns) {
-			grid.get(key).push({
-				label,
-				int: cols.intCol ? cellText(row, cols.intCol) : null,
-				deu: cols.deuCol ? cellText(row, cols.deuCol) : null,
-			});
+			const int = cols.intCol ? cellText(row, cols.intCol) : null;
+			const deu = cols.deuCol ? cellText(row, cols.deuCol) : null;
+			if (!isNomSgLabel(label)) {
+				if (cols.intCol && int == null) {
+					validator.warn('paradigm-unexpected-blank-cell', `${sheetName}: key "${key}" has a blank INT cell at ${label.filter(Boolean).join(' ')} (row ${rowNumber}) — blank cells are only expected at RECT NOM SG`);
+				}
+				if (cols.deuCol && deu == null) {
+					validator.warn('paradigm-unexpected-blank-cell', `${sheetName}: key "${key}" has a blank DEU cell at ${label.filter(Boolean).join(' ')} (row ${rowNumber}) — blank cells are only expected at RECT NOM SG`);
+				}
+			}
+			grid.get(key).push({ label, int, deu });
 		}
 	}
 	if (!reachedEnd) {
@@ -122,13 +134,21 @@ function readMfDeclGrid(workbook, validator) {
 		for (const key of allKeys) {
 			const ip = intPairs.get(key);
 			const dp = deuPairs.get(key);
-			grid.get(key).push({
+			const cell = {
 				label,
 				intM: ip ? cellText(row, ip.mCol) : null,
 				intF: ip ? cellText(row, ip.fCol) : null,
 				deuM: dp ? cellText(row, dp.mCol) : null,
 				deuF: dp ? cellText(row, dp.fCol) : null,
-			});
+			};
+			if (!isNomSgLabel(label)) {
+				for (const [field, present] of [['intM', ip], ['intF', ip], ['deuM', dp], ['deuF', dp]]) {
+					if (present && cell[field] == null) {
+						validator.warn('paradigm-unexpected-blank-cell', `${SHEETS.MF_DECL}: key "${key}" has a blank ${field} cell at ${label.filter(Boolean).join(' ')} (row ${rowNumber}) — blank cells are only expected at RECT NOM SG`);
+					}
+				}
+			}
+			grid.get(key).push(cell);
 		}
 	}
 	return grid;

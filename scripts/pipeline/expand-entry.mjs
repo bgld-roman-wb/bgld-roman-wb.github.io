@@ -50,12 +50,23 @@ function stripInflectedWordStress(stem) {
 	return stem.replace(/\S+$/u, (word) => stripStressMarks(word));
 }
 
+// A blank paradigm cell at RECT/NOM/SG marks a zero-ending noun (the spreadsheet's "∅"
+// paradigms — NMPE-∅, NME-∅-*, NFPE-∅-*, NFE-∅, NMF-03 — carry no suffix at all, since the
+// lemma itself already *is* the nominative singular, e.g. "daj", "paj"). Everywhere else in
+// the grid a blank cell means missing data, not zero, so the fallback is scoped to this one slot.
+function isNomSgLabel(label) {
+	return label[0] === 'RECT' && label[1] === 'NOM' && label[2] === 'SG';
+}
+
 // A paradigm cell value starting with "-" is a suffix to append to the stem; anything else
 // is a complete word form used verbatim (this is how NM-IRR-*/V-IRR-* columns work). When a
 // suffix carries stress, it replaces the stress marked in the stem; an unstressed suffix
 // leaves the stem stress in place (structure.pdf: "acél-o" -> "aceléske" vs. "acéle(s)").
-function combine(stem, value) {
-	if (value == null) return null;
+function combine(stem, value, allowZeroSuffix) {
+	if (value == null) {
+		if (!allowZeroSuffix) return null;
+		value = '-'; // zero morpheme: stem + '' = stem
+	}
 	if (value.startsWith('-')) {
 		const suffix = value.slice(1);
 		const adjustedStem = hasStressMark(suffix) ? stripInflectedWordStress(stem) : stem;
@@ -65,23 +76,29 @@ function combine(stem, value) {
 }
 
 function combineSingleRows(stemInt, stemDeu, rows, gram, labelKind) {
-	return rows.map((r) => ({
-		label: r.label,
-		labelDisplay: buildLabelDisplay(r.label, gram, labelKind),
-		int: combine(stemInt, r.int),
-		deu: combine(stemDeu, r.deu),
-	}));
+	return rows.map((r) => {
+		const zero = isNomSgLabel(r.label);
+		return {
+			label: r.label,
+			labelDisplay: buildLabelDisplay(r.label, gram, labelKind),
+			int: combine(stemInt, r.int, zero),
+			deu: combine(stemDeu, r.deu, zero),
+		};
+	});
 }
 
 function combineGenderedRows(stemInt, stemDeu, rows, mField, fField, gram, labelKind) {
-	return rows.map((r) => ({
-		label: r.label,
-		labelDisplay: buildLabelDisplay(r.label, gram, labelKind),
-		intM: combine(stemInt, r[`int${mField}`] ?? r[mField]),
-		intF: combine(stemInt, r[`int${fField}`] ?? r[fField]),
-		deuM: combine(stemDeu, r[`deu${mField}`] ?? r[mField]),
-		deuF: combine(stemDeu, r[`deu${fField}`] ?? r[fField]),
-	}));
+	return rows.map((r) => {
+		const zero = isNomSgLabel(r.label);
+		return {
+			label: r.label,
+			labelDisplay: buildLabelDisplay(r.label, gram, labelKind),
+			intM: combine(stemInt, r[`int${mField}`] ?? r[mField], zero),
+			intF: combine(stemInt, r[`int${fField}`] ?? r[fField], zero),
+			deuM: combine(stemDeu, r[`deu${mField}`] ?? r[mField], zero),
+			deuF: combine(stemDeu, r[`deu${fField}`] ?? r[fField], zero),
+		};
+	});
 }
 
 function displayCodes(label, kind) {
