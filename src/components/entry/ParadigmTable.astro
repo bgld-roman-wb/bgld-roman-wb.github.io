@@ -139,31 +139,46 @@ const DITTO = '〃';
 )}
 
 <style>
+	/* Sized to its content rather than stretched to the page width, so the label columns don't
+	   leave a wide gap before the forms. */
+	.paradigm {
+		width: auto;
+		min-width: min(100%, 28rem);
+		font-size: 1.0625rem;
+		border-bottom: 2px solid var(--color-text, currentColor);
+	}
 	.paradigm th,
 	.paradigm td {
 		vertical-align: top;
+		padding: 0.35rem 1.75rem 0.35rem 0;
+	}
+	.paradigm th:last-child,
+	.paradigm td:last-child {
+		padding-right: 0;
 	}
 	.paradigm thead td {
-		border-bottom: 1px solid var(--color-border);
+		border-bottom: none;
 	}
 	tbody th {
 		font-weight: 400;
 	}
-	/* The group label sits once at the top of its run; only a stronger rule between groups. */
+	/* The group label sits once at the top of its run; a heavier full-width rule opens each group
+	   (and the table), so a new tense/number is easy to spot. 2px wins over the 1px row rules in
+	   the collapsed border model. */
 	th.group {
 		color: var(--color-muted);
 		white-space: nowrap;
 		border-bottom: none;
 	}
+	tbody tr:first-child > *,
 	tr.group-start > * {
-		border-top: 1px solid var(--color-text, currentColor);
+		border-top: 2px solid var(--color-text, currentColor);
 	}
 	.word {
 		font-weight: 600;
 	}
 	.ditto {
 		color: var(--color-muted);
-		text-align: center;
 		user-select: none;
 	}
 </style>
