@@ -142,10 +142,12 @@ const DITTO = '〃';
 	/* Sized to its content rather than stretched to the page width, so the label columns don't
 	   leave a wide gap before the forms. */
 	.paradigm {
+		/* Group rules: heavier than the 1px row rules, but softer than full text color. */
+		--color-rule-strong: color-mix(in srgb, var(--color-muted) 55%, var(--color-border));
 		width: auto;
 		min-width: min(100%, 28rem);
 		font-size: 1.0625rem;
-		border-bottom: 2px solid var(--color-text, currentColor);
+		border-bottom: 2px solid var(--color-rule-strong);
 	}
 	.paradigm th,
 	.paradigm td {
@@ -159,8 +161,12 @@ const DITTO = '〃';
 	.paradigm thead td {
 		border-bottom: none;
 	}
-	tbody th {
+	/* All metadata (group, case/person, DEU/INT and m./f. headers) is muted, so the Roman forms
+	   are the only full-contrast, bold text in the table. */
+	tbody th,
+	thead th {
 		font-weight: 400;
+		color: var(--color-muted);
 	}
 	/* The group label sits once at the top of its run; a heavier full-width rule opens each group
 	   (and the table), so a new tense/number is easy to spot. 2px wins over the 1px row rules in
@@ -172,7 +178,7 @@ const DITTO = '〃';
 	}
 	tbody tr:first-child > *,
 	tr.group-start > * {
-		border-top: 2px solid var(--color-text, currentColor);
+		border-top: 2px solid var(--color-rule-strong);
 	}
 	.word {
 		font-weight: 600;
