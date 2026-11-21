@@ -34,11 +34,38 @@ function term(code) {
 // attach to the stem. The hyphen itself is never shown — "acél-o" displays as "acélo" (see
 // structure.pdf's worked example, which this pipeline reproduces exactly: stem "acél" +
 // paradigm suffix "-e(s)" -> "acéle(s)").
+//
+// Masculine/feminine lemmas cite both genders: "Afrikanér-i/-kíja" (stem "Afrikanér"). When the
+// masculine form has no ending, its part carries no hyphen — "adresát/-kíja" — so the stem is
+// the whole masculine part before the "/" (zeroMasculine: true), not everything up to the
+// feminine part's hyphen (which would leave a stray "/" in every form).
 export function splitStem(rawLemma) {
-	if (!rawLemma) return { stem: '', display: '' };
+	if (!rawLemma) return { stem: '', display: '', zeroMasculine: false };
+	const display = rawLemma.replace(/-/g, '');
 	const hyphenIndex = rawLemma.indexOf('-');
-	if (hyphenIndex === -1) return { stem: rawLemma, display: rawLemma };
-	return { stem: rawLemma.slice(0, hyphenIndex), display: rawLemma.replace(/-/g, '') };
+	const slashIndex = rawLemma.indexOf('/');
+	if (slashIndex !== -1 && (hyphenIndex === -1 || slashIndex < hyphenIndex)) {
+		return { stem: rawLemma.slice(0, slashIndex), display, zeroMasculine: hyphenIndex !== -1 };
+	}
+	if (hyphenIndex === -1) return { stem: rawLemma, display: rawLemma, zeroMasculine: false };
+	return { stem: rawLemma.slice(0, hyphenIndex), display, zeroMasculine: false };
+}
+
+// A zero-ending masculine lemma ("adresát/-kíja") only fits a paradigm whose masculine
+// nominative singular adds nothing (e.g. NMF-03). If the paradigm adds an ending (NMF-02's -i,
+// ADJ-DECL's -o), lemma and paradigm contradict each other and every generated form would be
+// a guess — so show no table and flag it for the professor instead.
+function masculineNomSgEnding(rows, mField) {
+	const nom = rows.find((r) => (r.label[0] === 'RECT' && r.label[1] === 'NOM' && r.label[2] === 'SG') || (r.label[0] === 'NOM' && r.label[1] === 'SG'));
+	const value = nom ? (nom[`int${mField}`] ?? nom[mField]) : null;
+	return value && value !== '-' ? value : null;
+}
+
+function zeroMasculineConflict(row, rows, mField, key, validator) {
+	const ending = masculineNomSgEnding(rows, mField);
+	if (!ending) return false;
+	validator.warn('lemma-paradigm-masculine-mismatch', `Row ${row.rowNumber} (${row.lemmaInt}): lemma marks a masculine without ending, but paradigm "${key}" adds "${ending}" in the masculine nominative singular — inflection table hidden`, { rowNumber: row.rowNumber });
+	return true;
 }
 
 function hasStressMark(value) {
@@ -157,10 +184,13 @@ export function expandParadigm(row, paradigmIndex, validator, corrections, gram)
 		return { kind: 'exist', key: 'EXIST', sheetName: SHEETS.V_EXIST, forms };
 	}
 
-	const { stem: stemInt } = splitStem(lemmaInt);
+	const { stem: stemInt, zeroMasculine } = splitStem(lemmaInt);
 	const { stem: stemDeu } = splitStem(lemmaDeu);
 
 	if (paradigm === 'ADJ-DECL') {
+		if (zeroMasculine && zeroMasculineConflict(row, paradigmIndex.adj.rows, 'm', paradigm, validator)) {
+			return { kind: 'error', key: paradigm, sheetName: SHEETS.ADJ_DECL, forms: [] };
+		}
 		const forms = combineGenderedRows(stemInt, stemDeu, paradigmIndex.adj.rows, 'm', 'f', gram, 'gendered');
 		return { kind: 'gendered', key: 'ADJ-DECL', sheetName: SHEETS.ADJ_DECL, forms };
 	}
@@ -173,6 +203,9 @@ export function expandParadigm(row, paradigmIndex, validator, corrections, gram)
 
 	if (sheetName === SHEETS.MF_DECL) {
 		const rows = paradigmIndex[SHEETS.MF_DECL].get(paradigm);
+		if (zeroMasculine && zeroMasculineConflict(row, rows, 'M', paradigm, validator)) {
+			return { kind: 'error', key: paradigm, sheetName, forms: [] };
+		}
 		const forms = combineGenderedRows(stemInt, stemDeu, rows, 'M', 'F', gram, 'noun');
 		return { kind: 'gendered', key: paradigm, sheetName, forms };
 	}
