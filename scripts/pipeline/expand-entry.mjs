@@ -1,27 +1,34 @@
 import { SHEETS } from './constants.mjs';
 
-const CONCRETE_CASE_CODES = new Set(['ABL', 'ACC', 'DAT', 'GEN', 'INS/SOC', 'LOC', 'NOM']);
-const STRUCTURAL_CASE_CODES = new Set(['OBL', 'RECT']);
+// Paradigm-table terminology, exactly as specified by the professor (2026-11-18_korrekturen.pdf):
+// each table row has a GROUP (number for nouns/adjectives, tense for verbs) shown once as a
+// row-spanning header, and a ROW label (case, or person code like "1SG" kept verbatim).
+const TERMS = {
+	SG: { de: 'Singular', en: 'Singular' },
+	PL: { de: 'Plural', en: 'Plural' },
+	NOM: { de: 'Nominativ', en: 'Nominative' },
+	ACC: { de: 'Akkusativ', en: 'Accusative' },
+	DAT: { de: 'Dativ', en: 'Dative' },
+	ABL: { de: 'Ablativ', en: 'Ablative' },
+	LOC: { de: 'Lokativ', en: 'Locative' },
+	'INS/SOC': { de: 'Instrumental/Soziativ', en: 'Instrumental/Sociative' },
+	GEN: { de: 'Genitiv', en: 'Genitive' },
+	OBL: { de: 'Obliquus', en: 'Oblique' },
+	PRS: { de: 'Präsens', en: 'Present' },
+	FUT: { de: 'Futur', en: 'Future' },
+	IPFV: { de: 'Imperfekt', en: 'Imperfect' },
+	PFV: { de: 'Perfekt', en: 'Perfect' },
+	IRR: { de: 'Irrealis', en: 'Irrealis' },
+	// V-EXIST ("to be") only. Not in the PDF; its past forms (somahi …) carry the same -ahi
+	// remoteness suffix as the verb Imperfekt, so they share that term.
+	PRT: { de: 'Imperfekt', en: 'Imperfect' },
+};
 const NUMBER_CODES = new Set(['SG', 'PL']);
-const TECHNICAL_ONLY_GERMAN_CODES = new Set(['FUT', 'PRS']);
-const GERMAN_NUMBER_LABELS = new Map([
-	['SG', 'Sg.'],
-	['PL', 'Pl.'],
-]);
-const ENGLISH_NUMBER_LABELS = new Map([
-	['SG', 'sg.'],
-	['PL', 'pl.'],
-]);
-const GERMAN_PERSON_LABELS = new Map([
-	['1', '1. Pers.'],
-	['2', '2. Pers.'],
-	['3', '3. Pers.'],
-]);
-const ENGLISH_PERSON_LABELS = new Map([
-	['1', '1st person'],
-	['2', '2nd person'],
-	['3', '3rd person'],
-]);
+const STRUCTURAL_CASE_CODES = new Set(['RECT']);
+
+function term(code) {
+	return TERMS[code] ?? { de: code, en: code };
+}
 
 // A lemma like "acél-o" marks, with a plain hyphen (U+002D), where inflectional endings
 // attach to the stem. The hyphen itself is never shown — "acél-o" displays as "acélo" (see
@@ -101,59 +108,28 @@ function combineGenderedRows(stemInt, stemDeu, rows, mField, fField, gram, label
 	});
 }
 
-function displayCodes(label, kind) {
+// Splits a paradigm label into its group and row parts (see TERMS above).
+//   nouns:      [RECT|OBL, CASE, SG|PL] -> group SG|PL, row CASE
+//   adjectives: [NOM|OBL, SG|PL]        -> group SG|PL, row NOM|OBL
+//   verbs:      [TENSE, PERSON]         -> group TENSE, row PERSON (e.g. "1SG", verbatim)
+//   to be:      [TENSE, PERSON, POS|NEG] -> as verbs, negated rows marked "3SG neg."
+function buildLabelDisplay(label, _gram, kind) {
 	const codes = label.filter(Boolean);
-	const hasConcreteCase = codes.some((code) => CONCRETE_CASE_CODES.has(code));
-	return codes.filter((code) => {
-		if (hasConcreteCase && STRUCTURAL_CASE_CODES.has(code)) return false;
-		if (kind === 'exist' && code === 'POS') return false;
-		return true;
-	});
-}
-
-function englishLabel(entry, code) {
-	const personNumber = personNumberParts(code);
-	if (personNumber) {
-		return `${ENGLISH_PERSON_LABELS.get(personNumber.person)} ${ENGLISH_NUMBER_LABELS.get(personNumber.number)}`;
+	const code = codes.join(' ');
+	if (kind === 'verb' || kind === 'exist') {
+		const [tense, person, polarity] = codes;
+		const neg = polarity === 'NEG';
+		return {
+			code,
+			group: term(tense),
+			row: { de: neg ? `${person} verneint` : person, en: neg ? `${person} negated` : person },
+		};
 	}
-	if (ENGLISH_NUMBER_LABELS.has(code)) return ENGLISH_NUMBER_LABELS.get(code);
-	const label = stripCategoryHint(entry?.en ?? code);
-	return label.replace(/^./, (first) => first.toLocaleLowerCase('en'));
-}
-
-function personNumberParts(code) {
-	const match = code.match(/^([123])(SG|PL)$/);
-	if (!match) return null;
-	return { person: match[1], number: match[2] };
-}
-
-function stripCategoryHint(label) {
-	return label.replace(/\s+\(([A-Z/]+)\)$/, '');
-}
-
-function germanLabel(entry, code) {
-	if (!entry) return code;
-	const technical = entry.de ? stripCategoryHint(entry.de) : null;
-	const personNumber = personNumberParts(code);
-	if (personNumber) {
-		return `${GERMAN_PERSON_LABELS.get(personNumber.person)} ${GERMAN_NUMBER_LABELS.get(personNumber.number)}`;
-	}
-	if (NUMBER_CODES.has(code)) return GERMAN_NUMBER_LABELS.get(code);
-	if (TECHNICAL_ONLY_GERMAN_CODES.has(code)) {
-		return technical ?? entry.deLay ?? code;
-	}
-	return technical ?? entry.deLay ?? code;
-}
-
-function buildLabelDisplay(label, gram, kind) {
-	const code = label.filter(Boolean).join(' ');
-	const codes = displayCodes(label, kind);
-	const german = codes.map((c) => germanLabel(gram.get(c), c)).join(', ');
-	return {
-		code,
-		de: german.replace(/^./u, (first) => first.toLocaleUpperCase('de')),
-		en: codes.map((c) => englishLabel(gram.get(c), c)).join(', '),
-	};
+	const number = codes.find((c) => NUMBER_CODES.has(c));
+	const rest = codes.filter((c) => !NUMBER_CODES.has(c) && !STRUCTURAL_CASE_CODES.has(c));
+	// Nouns carry OBL plus a concrete case; the concrete case is the row label.
+	const rowCode = rest.length > 1 ? rest.filter((c) => c !== 'OBL').join(' ') : rest[0];
+	return { code, group: term(number), row: term(rowCode) };
 }
 
 // Resolves a GLOSSARY row's Paradigm value into a fully expanded inflection table. Routing is

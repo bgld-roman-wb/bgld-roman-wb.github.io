@@ -46,7 +46,7 @@ spike (a snapshot regression). All remaining issues are listed in the generated
   and the codification project this dictionary grows out of. Useful context,
   not itself dictionary data.
 
-## Workbook structure (as of the 2026-06-17 snapshot, now `data/current/dictionary.xlsx`)
+## Workbook structure (as of the 2026-11-19 snapshot, now `data/current/dictionary.xlsx`; previous: `data/archive/2026-06-17/`, live as git tag `production-v1`)
 18 sheets. The important ones:
 
 - **GLOSSARY** — the main entry table, ~9,900 rows. Columns (A–AP):

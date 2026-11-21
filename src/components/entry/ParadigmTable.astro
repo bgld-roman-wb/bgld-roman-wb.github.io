@@ -2,9 +2,14 @@
 import type { Locale } from '../../i18n/ui';
 import { useTranslations } from '../../i18n/ui';
 
+interface Term {
+	de: string;
+	en: string;
+}
+
 interface ParadigmForm {
 	label: (string | null)[];
-	labelDisplay?: { code: string; de: string; en: string };
+	labelDisplay?: { code: string; group: Term; row: Term };
 	int?: string | null;
 	deu?: string | null;
 	intM?: string | null;
@@ -24,24 +29,25 @@ interface Props {
 const { kind, forms, lang } = Astro.props;
 const t = useTranslations(lang);
 
-function labelText(label: (string | null)[]) {
-	return label.filter(Boolean).join(' ');
-}
+// Layout follows the professor's spec (2026-11-18_korrekturen.pdf): a group label (Singular /
+// Plural, or a tense) shown once, spanning its rows, then the row label (case or "1SG"), then
+// the forms.
+const text = (term?: Term) => (term ? term[lang] : '');
+const code = (f: ParadigmForm) => f.labelDisplay?.code ?? f.label.filter(Boolean).join(' ');
+const groupOf = (f: ParadigmForm) => text(f.labelDisplay?.group);
+const rowOf = (f: ParadigmForm) => text(f.labelDisplay?.row) || code(f);
 
-function displayLabel(form: ParadigmForm) {
-	const fallback = labelText(form.label);
-	return (lang === 'de' ? form.labelDisplay?.de : form.labelDisplay?.en) || fallback;
-}
+// rowspan for the group cell: set on the first row of each run of equal groups, 0 elsewhere.
+const groupSpan = forms.map((f, i) => {
+	if (i > 0 && groupOf(forms[i - 1]) === groupOf(f)) return 0;
+	let n = 1;
+	while (i + n < forms.length && groupOf(forms[i + n]) === groupOf(f)) n++;
+	return n;
+});
 
-function codeLabel(form: ParadigmForm) {
-	return form.labelDisplay?.code || labelText(form.label);
-}
-
-// The two Roman orthographies (DEU primary, INT secondary) frequently coincide, differing only
-// where the international spelling uses letters like č/š/ž. Rather than print every value twice:
-//   - if INT equals DEU across the WHOLE table, collapse to a single "Roman" column;
-//   - otherwise keep both columns, but show a ditto mark where a given INT cell matches its DEU
-//     cell, so the international column only ever carries a value where it genuinely diverges.
+// The two Roman orthographies (DEU primary, INT secondary) frequently coincide. If INT equals
+// DEU across the WHOLE table there is one form column and no "DEU/INT" header at all;
+// otherwise both columns, with a ditto mark where a given INT cell matches its DEU cell.
 const sameNV = (f: ParadigmForm) => (f.int || '') === (f.deu || '');
 const sameGen = (f: ParadigmForm) => (f.intM || '') === (f.deuM || '') && (f.intF || '') === (f.deuF || '');
 const intRedundantNV = forms.every(sameNV);
@@ -53,14 +59,15 @@ const DITTO = '〃';
 
 {kind === 'exist' && (
 	<div class="table-scroll">
-		<table>
+		<table class="paradigm">
 			<thead>
-				<tr><th scope="col">{t('table.form')}</th><th scope="col">Roman</th><th scope="col">{t('table.meaning')}</th></tr>
+				<tr><td colspan="3"></td><th scope="col">{t('table.meaning')}</th></tr>
 			</thead>
 			<tbody>
-				{forms.map((f) => (
-					<tr>
-						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
+				{forms.map((f, i) => (
+					<tr class:list={{ 'group-start': groupSpan[i] > 0 && i > 0 }}>
+						{groupSpan[i] > 0 && <th scope="rowgroup" rowspan={groupSpan[i]} class="group">{groupOf(f)}</th>}
+						<th scope="row" class="row-label" title={code(f)}>{rowOf(f)}</th>
 						<td class="word">{f.int}</td>
 						<td>{lang === 'de' ? f.german : f.english}</td>
 					</tr>
@@ -72,18 +79,19 @@ const DITTO = '〃';
 
 {kind === 'gendered' && (
 	<div class="table-scroll">
-		<table>
+		<table class="paradigm">
 			<thead>
 				{intRedundantGen ? (
-					<tr><th scope="col">{t('table.form')}</th><th scope="col">{t('table.masc')}</th><th scope="col">{t('table.fem')}</th></tr>
+					<tr><td colspan="2"></td><th scope="col">{t('table.masc')}</th><th scope="col">{t('table.fem')}</th></tr>
 				) : (
-					<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU ({t('table.masc')})</th><th scope="col">DEU ({t('table.fem')})</th><th scope="col">INT ({t('table.masc')})</th><th scope="col">INT ({t('table.fem')})</th></tr>
+					<tr><td colspan="2"></td><th scope="col">DEU {t('table.masc')}</th><th scope="col">DEU {t('table.fem')}</th><th scope="col">INT {t('table.masc')}</th><th scope="col">INT {t('table.fem')}</th></tr>
 				)}
 			</thead>
 			<tbody>
-				{forms.map((f) => (
-					<tr>
-						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
+				{forms.map((f, i) => (
+					<tr class:list={{ 'group-start': groupSpan[i] > 0 && i > 0 }}>
+						{groupSpan[i] > 0 && <th scope="rowgroup" rowspan={groupSpan[i]} class="group">{groupOf(f)}</th>}
+						<th scope="row" class="row-label" title={code(f)}>{rowOf(f)}</th>
 						<td class="word">{f.deuM}</td>
 						<td class="word">{f.deuF}</td>
 						{!intRedundantGen && (sameGen(f) ? (
@@ -106,18 +114,17 @@ const DITTO = '〃';
 
 {(kind === 'noun' || kind === 'verb') && (
 	<div class="table-scroll">
-		<table>
-			<thead>
-				{intRedundantNV ? (
-					<tr><th scope="col">{t('table.form')}</th><th scope="col">Roman</th></tr>
-				) : (
-					<tr><th scope="col">{t('table.form')}</th><th scope="col">DEU</th><th scope="col">INT</th></tr>
-				)}
-			</thead>
+		<table class="paradigm">
+			{!intRedundantNV && (
+				<thead>
+					<tr><td colspan="2"></td><th scope="col">DEU</th><th scope="col">INT</th></tr>
+				</thead>
+			)}
 			<tbody>
-				{forms.map((f) => (
-					<tr>
-						<th scope="row" title={codeLabel(f)}>{displayLabel(f)}</th>
+				{forms.map((f, i) => (
+					<tr class:list={{ 'group-start': groupSpan[i] > 0 && i > 0 }}>
+						{groupSpan[i] > 0 && <th scope="rowgroup" rowspan={groupSpan[i]} class="group">{groupOf(f)}</th>}
+						<th scope="row" class="row-label" title={code(f)}>{rowOf(f)}</th>
 						<td class="word">{f.deu}</td>
 						{!intRedundantNV && (sameNV(f) ? (
 							<td class="ditto" title={t('table.sameAsGerman')}>{DITTO}</td>
@@ -132,8 +139,24 @@ const DITTO = '〃';
 )}
 
 <style>
-	tbody th[scope='row'] {
+	.paradigm th,
+	.paradigm td {
+		vertical-align: top;
+	}
+	.paradigm thead td {
+		border-bottom: 1px solid var(--color-border);
+	}
+	tbody th {
 		font-weight: 400;
+	}
+	/* The group label sits once at the top of its run; only a stronger rule between groups. */
+	th.group {
+		color: var(--color-muted);
+		white-space: nowrap;
+		border-bottom: none;
+	}
+	tr.group-start > * {
+		border-top: 1px solid var(--color-text, currentColor);
 	}
 	.word {
 		font-weight: 600;

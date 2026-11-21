@@ -29,15 +29,31 @@ function findLanguageBlockColumns(row1) {
 // `labelCols`, e.g. ['A','B','C']) until the first row whose label columns are entirely
 // empty — the real end of the table (see the F-DECL stray-cell case noted in constants.mjs;
 // scanning to the sheet's technical dimensions would pick up disconnected leftover cells).
+// Fallback when row 1's INT/DEU markers are missing (as in V-CONJG of the 2026-11-19 snapshot):
+// the INT block starts right after the label columns, and the DEU block starts where row 2's
+// key sequence begins to repeat (the first INT key showing up a second time).
+function inferLanguageBlockColumns(row2, firstDataCol) {
+	const firstKey = cellText(row2, firstDataCol);
+	if (!firstKey) return { intCol: null, deuCol: null };
+	for (let col = firstDataCol + 1; col < firstDataCol + GRID_ROW_SCAN_LIMIT; col++) {
+		if (cellText(row2, col) === firstKey) return { intCol: firstDataCol, deuCol: col };
+	}
+	return { intCol: null, deuCol: null };
+}
+
 function readKeyedGrid(sheet, labelCols, dataStartRow, validator, sheetName) {
 	const row1 = sheet.getRow(1);
-	const { intCol, deuCol } = findLanguageBlockColumns(row1);
+	const row2 = sheet.getRow(2);
+	let { intCol, deuCol } = findLanguageBlockColumns(row1);
 	if (!intCol || !deuCol) {
-		validator.error('paradigm-sheet-missing-block-markers', `${sheetName}: could not find INT/DEU column markers in row 1`);
-		return new Map();
+		({ intCol, deuCol } = inferLanguageBlockColumns(row2, labelCols.length + 1));
+		if (!intCol || !deuCol) {
+			validator.error('paradigm-sheet-missing-block-markers', `${sheetName}: could not find INT/DEU column markers in row 1`);
+			return new Map();
+		}
+		validator.warn('paradigm-sheet-block-markers-inferred', `${sheetName}: row 1 has no INT/DEU markers — inferred INT block from column ${intCol}, DEU block from column ${deuCol} (where the paradigm keys repeat)`);
 	}
 
-	const row2 = sheet.getRow(2);
 	const keyColumns = new Map(); // key -> { intCol, deuCol }
 	for (let col = intCol; col < deuCol; col++) {
 		const key = cellText(row2, col);
@@ -220,7 +236,7 @@ export function buildParadigmIndex(workbook, validator) {
 	const keyedGrids = {
 		[SHEETS.M_DECL]: readKeyedGrid(getSheet(workbook, SHEETS.M_DECL), ['A', 'B', 'C'], 3, validator, SHEETS.M_DECL),
 		[SHEETS.F_DECL]: readKeyedGrid(getSheet(workbook, SHEETS.F_DECL), ['A', 'B', 'C'], 3, validator, SHEETS.F_DECL),
-		[SHEETS.V_CONJG]: readKeyedGrid(getSheet(workbook, SHEETS.V_CONJG), ['A', 'B', 'C'], 3, validator, SHEETS.V_CONJG),
+		[SHEETS.V_CONJG]: readKeyedGrid(getSheet(workbook, SHEETS.V_CONJG), ['A', 'B'], 3, validator, SHEETS.V_CONJG),
 		[SHEETS.MF_DECL]: readMfDeclGrid(workbook, validator),
 	};
 	return {

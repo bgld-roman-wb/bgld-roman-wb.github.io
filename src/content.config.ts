@@ -17,7 +17,7 @@ const gramLabel = z.object({
 // drift between the pipeline and the site without extra ceremony.
 const paradigmForm = z.object({
 	label: z.array(z.string().nullable()),
-	labelDisplay: z.object({ code: z.string(), de: z.string(), en: z.string() }).optional(),
+	labelDisplay: z.object({ code: z.string(), group: z.object({ de: z.string(), en: z.string() }), row: z.object({ de: z.string(), en: z.string() }) }).optional(),
 	int: z.string().nullable().optional(),
 	deu: z.string().nullable().optional(),
 	intM: z.string().nullable().optional(),
