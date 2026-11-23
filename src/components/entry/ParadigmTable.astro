@@ -139,46 +139,51 @@ const DITTO = '〃';
 )}
 
 <style>
-	/* Sized to its content rather than stretched to the page width, so the label columns don't
-	   leave a wide gap before the forms. */
+	/* Matches the rest of the site: only 1px hairlines in --color-border (as everywhere else),
+	   and only where they carry meaning — between groups (Singular/Plural, tenses) and to close
+	   the table. Rows within a group are separated by spacing alone. Sized to its content rather
+	   than stretched to the page width. */
 	.paradigm {
-		/* Group rules: heavier than the 1px row rules, but softer than full text color. */
-		--color-rule-strong: color-mix(in srgb, var(--color-muted) 55%, var(--color-border));
 		width: auto;
-		min-width: min(100%, 28rem);
-		font-size: 1.0625rem;
-		border-bottom: 2px solid var(--color-rule-strong);
+		min-width: min(100%, 24rem);
+		margin-block: var(--space-2) var(--space-3);
+		border-bottom: 1px solid var(--color-border);
 	}
 	.paradigm th,
 	.paradigm td {
-		vertical-align: top;
-		padding: 0.35rem 1.75rem 0.35rem 0;
+		vertical-align: baseline;
+		padding: 0.2rem 2rem 0.2rem 0;
+		border: none;
 	}
 	.paradigm th:last-child,
 	.paradigm td:last-child {
 		padding-right: 0;
 	}
-	.paradigm thead td {
-		border-bottom: none;
-	}
-	/* All metadata (group, case/person, DEU/INT and m./f. headers) is muted, so the Roman forms
-	   are the only full-contrast, bold text in the table. */
-	tbody th,
+	/* Column headers (m./f., DEU/INT, meaning): small and muted, like the site's section labels. */
 	thead th {
+		font-size: 0.8125rem;
+		font-weight: 400;
+		color: var(--color-muted);
+		padding-bottom: 0.35rem;
+	}
+	/* All metadata is muted, so the Roman forms are the only full-contrast, bold text. */
+	tbody th {
 		font-weight: 400;
 		color: var(--color-muted);
 	}
-	/* The group label sits once at the top of its run; a heavier full-width rule opens each group
-	   (and the table), so a new tense/number is easy to spot. 2px wins over the 1px row rules in
-	   the collapsed border model. */
 	th.group {
-		color: var(--color-muted);
 		white-space: nowrap;
-		border-bottom: none;
 	}
+	/* One hairline opens the table and each group, with a little breathing room on both sides. */
 	tbody tr:first-child > *,
 	tr.group-start > * {
-		border-top: 2px solid var(--color-rule-strong);
+		border-top: 1px solid var(--color-border);
+		padding-top: 0.6rem;
+	}
+	tbody tr:last-child > *,
+	tbody tr:has(+ tr.group-start) > *,
+	th.group {
+		padding-bottom: 0.6rem;
 	}
 	.word {
 		font-weight: 600;
