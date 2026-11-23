@@ -139,21 +139,23 @@ const DITTO = '〃';
 )}
 
 <style>
-	/* Matches the rest of the site: only 1px hairlines in --color-border (as everywhere else),
-	   and only where they carry meaning — between groups (Singular/Plural, tenses) and to close
-	   the table. Rows within a group are separated by spacing alone. Sized to its content rather
-	   than stretched to the page width. */
+	/* Matches the rest of the site: every rule is the same 1px hairline in --color-border, between
+	   all rows and around the table. Sized to its content rather than stretched to the page width. */
 	.paradigm {
 		width: auto;
 		min-width: min(100%, 24rem);
 		margin-block: var(--space-2) var(--space-3);
-		border-bottom: 1px solid var(--color-border);
 	}
 	.paradigm th,
 	.paradigm td {
 		vertical-align: baseline;
-		padding: 0.2rem 2rem 0.2rem 0;
+		padding: 0.45rem 2rem 0.45rem 0;
 		border: none;
+		border-bottom: 1px solid var(--color-border);
+	}
+	.paradigm thead td,
+	.paradigm thead th {
+		border-bottom: none;
 	}
 	.paradigm th:last-child,
 	.paradigm td:last-child {
@@ -174,16 +176,8 @@ const DITTO = '〃';
 	th.group {
 		white-space: nowrap;
 	}
-	/* One hairline opens the table and each group, with a little breathing room on both sides. */
-	tbody tr:first-child > *,
-	tr.group-start > * {
+	tbody tr:first-child > * {
 		border-top: 1px solid var(--color-border);
-		padding-top: 0.6rem;
-	}
-	tbody tr:last-child > *,
-	tbody tr:has(+ tr.group-start) > *,
-	th.group {
-		padding-bottom: 0.6rem;
 	}
 	.word {
 		font-weight: 600;
